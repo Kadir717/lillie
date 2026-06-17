@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-espresso: #2b1d14;
+  --color-coffee: #4a3022;
+  --color-cream: #f5ede1;
+  --color-paper: #fbf7f0;
+  --color-amber: #c9842f;
+  --color-amber-bright: #e0993f;
+  --color-ink: #1f1611;
+}
+
+@font-face {
+  font-family: "Fraunces";
+  src: local("Fraunces");
+}
+
+html {
+  background-color: var(--color-ink);
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-cream);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+.font-display {
+  font-family: "Georgia", "Times New Roman", serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
