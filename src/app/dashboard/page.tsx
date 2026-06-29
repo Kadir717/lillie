@@ -1,21 +1,20 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { fetchGithubAggregate } from "@/lib/github";
-import DownloadButton from "@/components/DownloadButton";
+import CvPreviewPanel from "@/components/CvPreviewPanel";
 
 export default async function Dashboard() {
   const session = await getSession();
-
   if (!session) {
     redirect("/");
   }
 
-  let data;
+  let hasData = true;
   let loadError = false;
-
   try {
-    data = await fetchGithubAggregate(session.githubAccessToken, session.githubUsername);
+    await fetchGithubAggregate(session.githubAccessToken, session.githubUsername);
   } catch {
+    hasData = false;
     loadError = true;
   }
 
@@ -34,7 +33,6 @@ export default async function Dashboard() {
               <p className="text-xs text-cream/40">Signed in with GitHub</p>
             </div>
           </div>
-
           <form action="/api/auth/logout" method="POST">
             <button
               type="submit"
@@ -56,55 +54,7 @@ export default async function Dashboard() {
           </div>
         )}
 
-        {data && (
-          <div className="bg-paper text-ink rounded-2xl shadow-2xl shadow-black/40 p-8 sm:p-10 mb-8">
-            <div className="flex items-center justify-between mb-6 border-b border-coffee/15 pb-4">
-              <div>
-                <p className="font-display text-2xl font-semibold">
-                  {data.profile.name || data.profile.login}
-                </p>
-                {data.profile.bio && (
-                  <p className="text-sm text-coffee/70 italic">{data.profile.bio}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 gap-3 mb-6">
-              {[
-                [String(data.profile.publicRepos), "Repos"],
-                [String(data.totalStars), "Stars"],
-                [String(data.totalForks), "Forks"],
-                [String(data.contributionYears), "Years"],
-              ].map(([value, label]) => (
-                <div
-                  key={label}
-                  className="bg-cream/60 rounded-lg py-3 text-center border border-coffee/10"
-                >
-                  <p className="font-display text-xl font-bold text-amber">{value}</p>
-                  <p className="text-[10px] uppercase tracking-wide text-coffee/60">
-                    {label}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-xs uppercase tracking-wide text-coffee/50 mb-2">
-              Top Projects
-            </p>
-            <ul className="space-y-1">
-              {data.topRepos.slice(0, 4).map((repo) => (
-                <li key={repo.name} className="text-sm text-coffee/80">
-                  <span className="font-medium text-amber">
-                    {repo.name.split("/").pop()}
-                  </span>{" "}
-                  — {repo.description || "No description"}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        <DownloadButton disabled={!data} />
+        <CvPreviewPanel hasData={hasData} />
       </div>
     </main>
   );
