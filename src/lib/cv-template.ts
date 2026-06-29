@@ -8,12 +8,12 @@ import type { CvStrings } from "./cv-strings";
  * allowed to import from "docx" besides the render engine assembly step.
  */
 export type CvTemplate = {
-    id: string;
-    name: string;
+  id: string;
+  name: string;
 
-    renderHeader(model: CvModel, t: CvStrings): (Paragraph | Table)[];
-    renderStats(model: CvModel, t: CvStrings): Paragraph | Table | (Paragraph | Table)[];
-    renderLanguages(model: CvModel, t: CvStrings): (Paragraph | Table)[];
-    renderProjects(model: CvModel, t: CvStrings): (Paragraph | Table)[];
-    renderFooter(model: CvModel, t: CvStrings): (Paragraph | Table)[];
+  renderHeader(model: CvModel, t: CvStrings): (Paragraph | Table)[];
+  renderStats(model: CvModel, t: CvStrings): Paragraph | Table | (Paragraph | Table)[];
+  renderLanguages(model: CvModel, t: CvStrings): (Paragraph | Table)[];
+  renderProjects(model: CvModel, t: CvStrings): (Paragraph | Table)[];
+  renderFooter(model: CvModel, t: CvStrings): (Paragraph | Table)[];
 };

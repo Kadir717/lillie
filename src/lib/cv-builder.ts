@@ -21,28 +21,28 @@ export type { CvModel } from "./cv-model";
  * inside the CvTemplate implementation passed in.
  */
 export function buildCvDocument(
-    data: GithubAggregateData,
-    locale: CvLocale,
-    template: CvTemplate
+  data: GithubAggregateData,
+  locale: CvLocale,
+  template: CvTemplate
 ): Document {
-    const model = mapGithubToCvModel(data);
-    const t = getStrings(locale);
+  const model = mapGithubToCvModel(data);
+  const t = getStrings(locale);
 
-    const header = template.renderHeader(model, t);
-    const stats = template.renderStats(model, t);
-    const languages = template.renderLanguages(model, t);
-    const projects = template.renderProjects(model, t);
-    const footer = template.renderFooter(model, t);
+  const header = template.renderHeader(model, t);
+  const stats = template.renderStats(model, t);
+  const languages = template.renderLanguages(model, t);
+  const projects = template.renderProjects(model, t);
+  const footer = template.renderFooter(model, t);
 
-    const statsBlocks = Array.isArray(stats) ? stats : [stats];
+  const statsBlocks = Array.isArray(stats) ? stats : [stats];
 
-    return new Document({
-        styles: docStyles,
-        sections: [
-            {
-                properties: pageSection,
-                children: [...header, ...statsBlocks, ...languages, ...projects, ...footer],
-            },
-        ],
-    });
+  return new Document({
+    styles: docStyles,
+    sections: [
+      {
+        properties: pageSection,
+        children: [...header, ...statsBlocks, ...languages, ...projects, ...footer],
+      },
+    ],
+  });
 }
