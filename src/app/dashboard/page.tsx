@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { fetchGithubAggregate } from "@/lib/github";
+import { prisma } from "@/lib/db";
 import CvPreviewPanel from "@/components/CvPreviewPanel";
+import GitHubInsights from "@/components/GitHubInsights";
+import type { CvProfileData } from "@/components/ProfileSelector";
 
 export default async function Dashboard() {
   const session = await getSession();
@@ -9,52 +11,125 @@ export default async function Dashboard() {
     redirect("/");
   }
 
-  let hasData = true;
-  let loadError = false;
-  try {
-    await fetchGithubAggregate(session.githubAccessToken, session.githubUsername);
-  } catch {
-    hasData = false;
-    loadError = true;
+  // ── Fetch user identity ─────────────────────────────────────────
+  const user = await prisma.user.findUnique({
+    where: { githubId: session.githubId },
+    select: {
+      id: true,
+      locale: true,
+      template: true,
+    },
+  });
+
+  // ── Fetch saved preferences ─────────────────────────────────────
+  let initialPrefs: { locale: string; template: string } | null = null;
+  if (user) {
+    initialPrefs = { locale: user.locale, template: user.template };
+  }
+
+  // ── Fetch profiles ──────────────────────────────────────────────
+  let profiles: CvProfileData[] = [];
+  if (user) {
+    try {
+      const rows = await prisma.cvProfile.findMany({
+        where: { userId: user.id },
+        orderBy: { updatedAt: "desc" },
+        select: {
+          id: true,
+          title: true,
+          locale: true,
+          template: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+      // Prisma returns Date for DateTime fields; CvProfileData expects strings.
+      // Next.js serializes Date objects when passing server→client props, but
+      // TypeScript requires an explicit conversion for strict compatibility.
+      profiles = rows.map((r) => ({
+        ...r,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+      }));
+    } catch {
+      // Profiles unavailable — component will use defaults
+    }
   }
 
   return (
-    <main className="min-h-screen bg-ink text-cream px-6 py-16">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-12">
-          <div className="flex items-center gap-3">
-            <img
-              src={session.githubAvatarUrl}
-              alt={session.githubUsername}
-              className="w-10 h-10 rounded-full border border-coffee"
-            />
-            <div>
-              <p className="font-medium">{session.githubUsername}</p>
-              <p className="text-xs text-cream/40">Signed in with GitHub</p>
-            </div>
+    <main className="min-h-screen bg-ink text-cream">
+      {/* Top navigation bar */}
+      <header className="border-b border-coffee/20 px-6 py-3">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-lg font-semibold tracking-tight text-amber">
+              LILLIE
+            </span>
           </div>
-          <form action="/api/auth/logout" method="POST">
-            <button
-              type="submit"
-              className="text-sm text-cream/50 hover:text-cream/80 transition-colors"
+          <nav className="flex items-center gap-4">
+            <a
+              href="/dashboard"
+              className="text-sm text-cream/60 hover:text-cream transition-colors"
             >
-              Sign out
-            </button>
-          </form>
+              Dashboard
+            </a>
+            <a
+              href="/settings"
+              className="text-sm text-cream/40 hover:text-cream transition-colors"
+            >
+              Settings
+            </a>
+            <span className="text-sm text-cream/30">|</span>
+            <span className="text-sm text-cream/50">{session.githubUsername}</span>
+            <form action="/api/auth/logout" method="POST">
+              <button
+                type="submit"
+                className="text-sm text-cream/40 hover:text-cream/70 transition-colors"
+              >
+                Sign out
+              </button>
+            </form>
+          </nav>
         </div>
+      </header>
 
-        {loadError && (
-          <div className="bg-coffee/30 border border-coffee rounded-xl p-6 text-center mb-8">
-            <p className="text-amber-bright font-medium mb-1">
-              Couldn&apos;t load your GitHub data
-            </p>
-            <p className="text-sm text-cream/60">
-              GitHub might be rate-limiting us — give it a minute and refresh.
-            </p>
-          </div>
-        )}
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Sidebar: insights + user card */}
+          <aside className="lg:col-span-1 space-y-6">
+            {/* User card */}
+            <div className="bg-coffee/10 border border-coffee/20 rounded-xl p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src={session.githubAvatarUrl}
+                  alt={session.githubUsername}
+                  className="w-12 h-12 rounded-full border border-coffee"
+                />
+                <div>
+                  <p className="font-medium text-sm">{session.githubUsername}</p>
+                  <p className="text-xs text-cream/40">Signed in with GitHub</p>
+                </div>
+              </div>
+              <a
+                href="/settings"
+                className="inline-block text-xs text-cream/40 hover:text-cream/70 transition-colors"
+              >
+                Edit profile settings →
+              </a>
+            </div>
 
-        <CvPreviewPanel hasData={hasData} />
+            {/* GitHub Insights */}
+            <GitHubInsights />
+          </aside>
+
+          {/* Main: CV preview */}
+          <section className="lg:col-span-2">
+            <CvPreviewPanel
+              initialPrefs={initialPrefs}
+              initialProfiles={profiles}
+            />
+          </section>
+        </div>
       </div>
     </main>
   );

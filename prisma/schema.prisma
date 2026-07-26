@@ -1,0 +1,87 @@
+// ═══════════════════════════════════════════════════════════════════
+// LILLIE — Prisma Database Schema
+// ═══════════════════════════════════════════════════════════════════
+//
+// Current database:   SQLite (local development)
+// Production target:  Turso (SQLite-compatible, Vercel-friendly)
+// Future upgrade:     PostgreSQL (via Neon, Supabase, etc.)
+//
+// The schema is designed so that switching the provider from
+// sqlite → postgresql requires only:
+//   1. Changing the `provider` field below
+//   2. Changing DATABASE_URL in your environment
+//   3. Running `npx prisma generate && npx prisma migrate deploy`
+//
+// No model changes needed — Prisma abstracts provider differences.
+//
+// ── Design Decisions ─────────────────────────────────────────────
+//
+// 1. Single User model (no separate preferences table)
+//    For the current feature set (locale, template), putting preferences
+//    directly on the User model avoids a JOIN and keeps the schema flat.
+//    A separate UserPreferences model can be introduced later if we add
+//    many preference fields.
+//
+// 2. GitHub ID as the unique external identity
+//    `githubId` is the stable external identifier. The `id` field is an
+//    internal cuid (not exposed to clients) so we can change identity
+//    providers later without migrating foreign keys.
+//
+// 3. No access token stored in the database
+//    The GitHub OAuth token is stored in the JWT session, not the DB.
+//    This keeps the token lifecycle tied to the session (7-day max).
+//    If we need long-lived token storage (background jobs, etc.), add
+//    an `accessToken` field here.
+// ═══════════════════════════════════════════════════════════════════
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Core user record, created/updated on every GitHub OAuth login.
+model User {
+  id        String   @id @default(cuid())
+  githubId  Int      @unique
+  login     String
+  name      String?
+  avatarUrl String?
+  email     String?
+
+  /// Preferred CV locale. Must be one of: en, tr, de, fr, es, pt, ja, ko, zh, ru, ar
+  locale   String @default("en")
+  /// Preferred CV template ID. Must be one of: classic_professional, developer_card
+  template String @default("classic_professional")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// All CV profiles owned by this user
+  profiles CvProfile[]
+}
+
+/// A named CV configuration owned by a user.
+/// Each profile stores a locale, template, and custom title so users
+/// can maintain multiple CV variants (e.g. "Software Engineer", "Backend Developer").
+model CvProfile {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// User-given name for this profile (e.g. "Software Engineer", "Backend Developer")
+  title    String @default("My CV")
+  /// CV locale code. Must be one of: en, tr, de, fr, es, pt, ja, ko, zh, ru, ar
+  locale   String @default("en")
+  /// CV template ID. Must be one of: classic_professional, developer_card
+  template String @default("classic_professional")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, title])
+  @@index([userId])
+}

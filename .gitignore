@@ -5,3 +5,18 @@
 .env.local
 *.log
 .DS_Store
+
+# Local database
+prisma/dev.db
+
+# Prisma generated
+node_modules/.prisma/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Freebuff
+.freebuff/
+
+# Temporary files
+tatus
