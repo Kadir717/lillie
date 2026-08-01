@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validateLocale, validateTemplate } from "@/lib/validate";
+import { getUserEntitlements } from "@/lib/billing/entitlements";
+import { checkLimit, limitMessage } from "@/lib/billing/usage";
+import { templateAllowed } from "@/lib/billing/templates";
 
 /**
  * GET /api/profiles
@@ -117,7 +120,7 @@ export async function POST(request: NextRequest) {
     if (!validated) {
       return NextResponse.json(
         {
-          error: `Invalid template. Supported: classic_professional, developer_card`,
+          error: `Invalid template. Supported: classic_professional, developer_card, minimal`,
         },
         { status: 400 }
       );
@@ -126,21 +129,36 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { githubId: session.githubId },
-      select: { id: true },
-    });
+    const billing = await getUserEntitlements(session.githubId);
 
-    if (!user) {
+    if (!billing) {
       return NextResponse.json(
         { error: "User not found. Try signing out and back in." },
         { status: 404 }
       );
     }
+    const { id: userId, entitlements } = billing;
+
+    // ── Entitlement: profile count limit ─────────────────────────
+    const profileLimit = await checkLimit(userId, "profiles", entitlements);
+    if (!profileLimit.allowed) {
+      return NextResponse.json(
+        { error: limitMessage("profiles", profileLimit) },
+        { status: 403 }
+      );
+    }
+
+    // ── Entitlement: premium template gate ───────────────────────
+    if (!templateAllowed(template, entitlements)) {
+      return NextResponse.json(
+        { error: "This template requires a paid plan." },
+        { status: 403 }
+      );
+    }
 
     const profile = await prisma.cvProfile.create({
       data: {
-        userId: user.id,
+        userId,
         title,
         locale,
         template,

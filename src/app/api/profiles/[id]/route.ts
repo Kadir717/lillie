@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validateLocale, validateTemplate } from "@/lib/validate";
+import { getUserEntitlements } from "@/lib/billing/entitlements";
+import { templateAllowed } from "@/lib/billing/templates";
 
 /**
  * GET /api/profiles/[id]
@@ -121,17 +123,19 @@ export async function PATCH(
     updates.locale = locale;
   }
 
+  let requestedTemplate: string | null = null;
   if (body.template !== undefined) {
     const template = validateTemplate(body.template as string);
     if (!template) {
       return NextResponse.json(
         {
-          error: `Invalid template. Supported: classic_professional, developer_card`,
+          error: `Invalid template. Supported: classic_professional, developer_card, minimal`,
         },
         { status: 400 }
       );
     }
     updates.template = template;
+    requestedTemplate = template;
   }
 
   if (Object.keys(updates).length === 0) {
@@ -153,6 +157,19 @@ export async function PATCH(
         { error: "Profile not found" },
         { status: 404 }
       );
+    }
+
+    // ── Entitlement: premium template gate ───────────────────────
+    // Mirrors POST /api/profiles so PATCH can't be used to unlock a
+    // premium template on a free plan.
+    if (requestedTemplate) {
+      const billing = await getUserEntitlements(session.githubId);
+      if (billing && !templateAllowed(requestedTemplate, billing.entitlements)) {
+        return NextResponse.json(
+          { error: "This template requires a paid plan." },
+          { status: 403 }
+        );
+      }
     }
 
     const profile = await prisma.cvProfile.update({

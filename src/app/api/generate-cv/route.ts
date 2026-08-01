@@ -5,6 +5,10 @@ import { fetchGithubAggregate } from "@/lib/github";
 import { buildCvDocument } from "@/lib/cv-builder";
 import { templates } from "@/lib/templates";
 import { validateLocale, validateTemplate } from "@/lib/validate";
+import { trackCvDownload } from "@/lib/analytics/events";
+import { prisma } from "@/lib/db";
+import { getUserEntitlements } from "@/lib/billing/entitlements";
+import { templateAllowed } from "@/lib/billing/templates";
 import type { CvLocale } from "@/lib/cv-strings";
 
 /**
@@ -15,6 +19,8 @@ import type { CvLocale } from "@/lib/cv-strings";
  * Query params:
  *   locale    — locale code (default "en", validated against allowed set)
  *   template  — template ID (default "classic_professional", validated)
+ *   profileId — optional CV profile id (ownership-verified; used only for
+ *               per-profile download analytics, never trusted blindly)
  *
  * Responses:
  *   200 — .docx file stream
@@ -63,7 +69,7 @@ export async function GET(request: NextRequest) {
     if (!validated) {
       return NextResponse.json(
         {
-          error: `Invalid template: "${rawTemplate}". Supported: classic_professional, developer_card`,
+          error: `Invalid template: "${rawTemplate}". Supported: classic_professional, developer_card, minimal`,
         },
         { status: 400 }
       );
@@ -75,7 +81,20 @@ export async function GET(request: NextRequest) {
 
   const template = templates[templateId as keyof typeof templates] ?? templates.classic_professional;
 
+  // Optional profile id for per-profile download analytics. Verified for
+  // ownership before recording — a foreign profile id is simply ignored.
+  const rawProfileId = request.nextUrl.searchParams.get("profileId");
+
   try {
+    // ── Entitlement: premium template gate ───────────────────────
+    const billing = await getUserEntitlements(session.githubId);
+    if (billing && !templateAllowed(templateId, billing.entitlements)) {
+      return NextResponse.json(
+        { error: "This template requires a paid plan." },
+        { status: 403 }
+      );
+    }
+
     // ── Fetch & build ────────────────────────────────────────────
     const data = await fetchGithubAggregate(
       session.githubAccessToken,
@@ -84,6 +103,28 @@ export async function GET(request: NextRequest) {
 
     const doc = buildCvDocument(data, locale, template);
     const buffer = await Packer.toBuffer(doc);
+
+    // ── Record download analytics (fire-and-forget, never fatal) ──
+    try {
+      if (billing) {
+        let ownedProfileId: string | null = null;
+        if (rawProfileId) {
+          const owned = await prisma.cvProfile.findFirst({
+            where: { id: rawProfileId, userId: billing.id },
+            select: { id: true },
+          });
+          if (owned) ownedProfileId = owned.id;
+        }
+        await trackCvDownload({
+          userId: billing.id,
+          locale,
+          template: templateId,
+          profileId: ownedProfileId,
+        });
+      }
+    } catch (err) {
+      console.error("Analytics: download event skipped:", err);
+    }
 
     // ── Stream the .docx ─────────────────────────────────────────
     return new NextResponse(new Uint8Array(buffer), {
