@@ -42,6 +42,13 @@ Priority legend: **HIGH** = fix soon, **MED** = plan for, **LOW** = acceptable n
    template must also gate `POST /api/profiles/[id]/versions` (documented
    in `src/lib/billing/templates.ts`).
 
+8. **No Prisma migrations — schema changes are applied via `prisma db push`.**
+   There is no `prisma/migrations/` directory yet, so there is no auditable
+   migration history and no safe path to alter an existing production
+   database. Before production launch, adopt `prisma migrate dev` (create the
+   initial migration from the current schema, then commit `prisma/migrations/`
+   and run `prisma migrate deploy` in production).
+
 ## MED
 
 3. **No tests yet for the new resume-engine paths.** Version ownership checks,
