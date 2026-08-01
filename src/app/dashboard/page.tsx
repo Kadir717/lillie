@@ -1,9 +1,28 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { fetchGithubAggregate } from "@/lib/github";
+import { mapGithubToCvModel } from "@/lib/cv-model";
+import {
+  computeGithubAnalytics,
+  fetchTopReadmes,
+  type GithubAnalyticsData,
+} from "@/lib/github-analytics";
+import { upsertGithubSnapshot } from "@/lib/analytics/growth";
 import CvPreviewPanel from "@/components/CvPreviewPanel";
 import GitHubInsights from "@/components/GitHubInsights";
+import GitHubAnalyticsPanel from "@/components/GitHubAnalyticsPanel";
 import type { CvProfileData } from "@/components/ProfileSelector";
+import {
+  AISummaryCard,
+  SkillsCard,
+  AchievementsCard,
+} from "@/components/ai";
+
+// Note: all analytics computation now lives in src/lib/github-analytics.ts
+// (computeGithubAnalytics) — shared by the dashboard AND /api/github/insights,
+// so there is no duplicated computation logic to keep in sync.
 
 export default async function Dashboard() {
   const session = await getSession();
@@ -43,9 +62,6 @@ export default async function Dashboard() {
           updatedAt: true,
         },
       });
-      // Prisma returns Date for DateTime fields; CvProfileData expects strings.
-      // Next.js serializes Date objects when passing server→client props, but
-      // TypeScript requires an explicit conversion for strict compatibility.
       profiles = rows.map((r) => ({
         ...r,
         createdAt: r.createdAt.toISOString(),
@@ -54,6 +70,40 @@ export default async function Dashboard() {
     } catch {
       // Profiles unavailable — component will use defaults
     }
+  }
+
+  // ── Fetch GitHub data once, derive model + analytics ───────────
+  let cvModel: ReturnType<typeof mapGithubToCvModel> | null = null;
+  let insights: GithubAnalyticsData | null = null;
+
+  try {
+    const githubData = await fetchGithubAggregate(
+      session.githubAccessToken,
+      session.githubUsername
+    );
+    cvModel = mapGithubToCvModel(githubData);
+
+    // README content for the top repos (degraded to null on 404/failure).
+    const readmes = await fetchTopReadmes(
+      session.githubAccessToken,
+      session.githubUsername,
+      githubData.topRepos
+    );
+
+    insights = computeGithubAnalytics(githubData, readmes);
+
+    // ── Record daily GitHub growth snapshot (fire-and-forget) ───
+    if (user) {
+      void upsertGithubSnapshot({
+        userId: user.id,
+        stars: githubData.totalStars,
+        repos: githubData.profile.publicRepos,
+        forks: githubData.totalForks,
+        followers: githubData.profile.followers,
+      });
+    }
+  } catch {
+    // Components will show their fallback error states
   }
 
   return (
@@ -100,9 +150,11 @@ export default async function Dashboard() {
             {/* User card */}
             <div className="bg-coffee/10 border border-coffee/20 rounded-xl p-5">
               <div className="flex items-center gap-3 mb-4">
-                <img
+                <Image
                   src={session.githubAvatarUrl}
                   alt={session.githubUsername}
+                  width={48}
+                  height={48}
                   className="w-12 h-12 rounded-full border border-coffee"
                 />
                 <div>
@@ -118,8 +170,8 @@ export default async function Dashboard() {
               </a>
             </div>
 
-            {/* GitHub Insights */}
-            <GitHubInsights />
+            {/* GitHub Insights — data provided server-side, no client fetch */}
+            <GitHubInsights initialData={insights} />
           </aside>
 
           {/* Main: CV preview */}
@@ -127,7 +179,32 @@ export default async function Dashboard() {
             <CvPreviewPanel
               initialPrefs={initialPrefs}
               initialProfiles={profiles}
+              initialModel={cvModel}
             />
+
+            {/* ── GitHub Analytics — explainable, computed server-side ── */}
+            {insights && (
+              <div className="mt-10">
+                <GitHubAnalyticsPanel initialData={insights} />
+              </div>
+            )}
+
+            {/* ── AI Insights Section ────────────────────────────── */}
+            <section className="mt-10">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-base font-semibold text-cream flex items-center gap-2">
+                  <span>AI Insights</span>
+                  <span className="text-[10px] uppercase tracking-widest text-amber/60 bg-amber/10 px-2 py-0.5 rounded-full">
+                    Coming Soon
+                  </span>
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <AISummaryCard />
+                <SkillsCard />
+                <AchievementsCard />
+              </div>
+            </section>
           </section>
         </div>
       </div>

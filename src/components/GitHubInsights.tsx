@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 
-interface GitHubInsightsData {
+export interface GitHubInsightsData {
   contributionSummary: {
     totalRepos: number;
     totalStars: number;
@@ -27,15 +27,20 @@ interface GitHubInsightsData {
 }
 
 export default function GitHubInsights({
+  initialData,
   onError,
 }: {
+  initialData?: GitHubInsightsData | null;
   onError?: (msg: string) => void;
 }) {
-  const [data, setData] = useState<GitHubInsightsData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<GitHubInsightsData | null>(initialData ?? null);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    // If initialData was provided, skip the fetch entirely
+    if (initialData) return;
+
     let cancelled = false;
     async function load() {
       try {
@@ -54,7 +59,7 @@ export default function GitHubInsights({
     }
     load();
     return () => { cancelled = true; };
-  }, [onError]);
+  }, [onError, initialData]);
 
   if (loading) {
     return (
