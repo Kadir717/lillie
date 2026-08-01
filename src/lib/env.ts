@@ -64,4 +64,12 @@ export function validateEnv(): void {
         "   Set it to your production domain (e.g. https://lillie.dev)."
     );
   }
+
+  // --- AI services (optional — the AI layer degrades to 503) ---
+  if (!process.env.AI_API_KEY) {
+    console.warn(
+      "⚠️  LILLIE: AI_API_KEY is not set. /api/ai/* endpoints will return 503.\n" +
+        "   Set AI_API_KEY (and optionally AI_PROVIDER/AI_MODEL/AI_BASE_URL) to enable AI tools."
+    );
+  }
 }
