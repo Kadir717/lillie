@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import DownloadButton from "./DownloadButton";
 import ProfileSelector, { type CvProfileData } from "./ProfileSelector";
+import VersionHistory from "./VersionHistory";
+import ShareResume from "./ShareResume";
 import { CvPreview } from "@/cv";
 import type { CvModel } from "@/cv";
 
@@ -22,6 +24,7 @@ const LOCALES = [
 const TEMPLATES = [
   { code: "classic_professional", label: "Classic Professional" },
   { code: "developer_card", label: "Developer Card" },
+  { code: "minimal", label: "Minimal" },
 ] as const;
 
 type LocaleCode = (typeof LOCALES)[number]["code"];
@@ -59,9 +62,11 @@ async function saveToProfile(profileId: string, key: string, value: string) {
 export default function CvPreviewPanel({
   initialPrefs,
   initialProfiles = [],
+  initialModel,
 }: {
   initialPrefs: { locale: string; template: string } | null;
   initialProfiles?: CvProfileData[];
+  initialModel?: CvModel | null;
 }) {
   // Profile state
   const [profiles, setProfiles] = useState<CvProfileData[]>(initialProfiles);
@@ -81,11 +86,11 @@ export default function CvPreviewPanel({
 
   const [localeOpen, setLocaleOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
-  const [model, setModel] = useState<CvModel | null>(null);
+  const [model, setModel] = useState<CvModel | null>(initialModel ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
-  const fetchedRef = useRef(false);
+  const fetchedRef = useRef(!!initialModel);
 
   const selectedLocale = LOCALES.find((l) => l.code === locale)!;
   const selectedTemplate = TEMPLATES.find((t) => t.code === template)!;
@@ -94,6 +99,7 @@ export default function CvPreviewPanel({
 
   const handleSelectProfile = useCallback((id: string) => {
     setSelectedProfileId(id);
+    setRestoredFromVersion(false);
     const p = profiles.find((pr) => pr.id === id);
     if (p) {
       setLocale(p.locale as LocaleCode);
@@ -161,6 +167,7 @@ export default function CvPreviewPanel({
   const handleLocaleChange = useCallback((code: LocaleCode) => {
     setLocale(code);
     setLocaleOpen(false);
+    setRestoredFromVersion(false);
     if (selectedProfileId) {
       saveToProfile(selectedProfileId, "locale", code);
     }
@@ -169,15 +176,94 @@ export default function CvPreviewPanel({
   const handleTemplateChange = useCallback((code: TemplateCode) => {
     setTemplate(code);
     setTemplateOpen(false);
+    setRestoredFromVersion(false);
     if (selectedProfileId) {
       saveToProfile(selectedProfileId, "template", code);
     }
   }, [selectedProfileId]);
 
+  // ── Version restore ─────────────────────────────────────────────
+  // Restoring a version replaces the live preview model. The restored
+  // model may be stale relative to GitHub, so a note is shown in the UI.
+  const [restoredFromVersion, setRestoredFromVersion] = useState(false);
+
+  const handleRestoreModel = useCallback((restored: CvModel) => {
+    setModel(restored);
+    setRestoredFromVersion(true);
+    setError(false);
+  }, []);
+
+  // ── Accessibility: keyboard navigation for dropdowns ───────────
+  const localeButtonRef = useRef<HTMLButtonElement>(null);
+  const templateButtonRef = useRef<HTMLButtonElement>(null);
+  const localeListRef = useRef<HTMLDivElement>(null);
+  const templateListRef = useRef<HTMLDivElement>(null);
+
+  const [localeHighlight, setLocaleHighlight] = useState(0);
+  const [templateHighlight, setTemplateHighlight] = useState(0);
+
+  // Focus the listbox when it opens and sync highlight to the current value.
+  useEffect(() => {
+    if (localeOpen) {
+      localeListRef.current?.focus();
+      setLocaleHighlight(
+        Math.max(0, LOCALES.findIndex((l) => l.code === locale))
+      );
+    }
+    if (templateOpen) {
+      templateListRef.current?.focus();
+      setTemplateHighlight(
+        Math.max(0, TEMPLATES.findIndex((t) => t.code === template))
+      );
+    }
+  }, [localeOpen, templateOpen, locale, template]);
+
+  const handleLocaleKeydown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setLocaleOpen(false);
+        localeButtonRef.current?.focus();
+      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setLocaleHighlight((i) => {
+          const next = e.key === "ArrowDown" ? i + 1 : i - 1;
+          return (next + LOCALES.length) % LOCALES.length;
+        });
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleLocaleChange(LOCALES[localeHighlight].code);
+        localeButtonRef.current?.focus();
+      }
+    },
+    [localeHighlight, handleLocaleChange]
+  );
+
+  const handleTemplateKeydown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setTemplateOpen(false);
+        templateButtonRef.current?.focus();
+      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        setTemplateHighlight((i) => {
+          const next = e.key === "ArrowDown" ? i + 1 : i - 1;
+          return (next + TEMPLATES.length) % TEMPLATES.length;
+        });
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleTemplateChange(TEMPLATES[templateHighlight].code);
+        templateButtonRef.current?.focus();
+      }
+    },
+    [templateHighlight, handleTemplateChange]
+  );
+
   // ── Model fetch ────────────────────────────────────────────────
 
   const loadModel = useCallback(async () => {
-    if (fetchedRef.current) return;
+    if (fetchedRef.current || initialModel) return;
     fetchedRef.current = true;
     setLoading(true);
     setError(false);
@@ -192,7 +278,7 @@ export default function CvPreviewPanel({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [initialModel]);
 
   useEffect(() => {
     loadModel();
@@ -220,34 +306,57 @@ export default function CvPreviewPanel({
         {/* Language Dropdown */}
         <div className="relative">
           <button
+            ref={localeButtonRef}
             onClick={() => {
               setLocaleOpen((v) => !v);
               setTemplateOpen(false);
             }}
+            aria-haspopup="listbox"
+            aria-expanded={localeOpen}
+            aria-controls="locale-listbox"
+            aria-label={`Select language — current: ${selectedLocale.label}`}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-coffee/60 text-sm text-cream/80 hover:text-cream transition-colors min-w-[150px] justify-between"
           >
             <span>
               {selectedLocale.flag} {selectedLocale.label}
             </span>
-            <span className="text-xs opacity-50">
+            <span className="text-xs opacity-50" aria-hidden="true">
               {localeOpen ? "\u25B2" : "\u25BC"}
             </span>
           </button>
 
           {localeOpen && (
-            <div className="absolute top-full mt-1 left-0 z-50 bg-ink border border-coffee/60 rounded-lg overflow-hidden shadow-xl min-w-[160px] max-h-72 overflow-y-auto">
-              {LOCALES.map((l) => (
+            <div
+              id="locale-listbox"
+              ref={localeListRef}
+              role="listbox"
+              aria-label="Language options"
+              tabIndex={-1}
+              onKeyDown={handleLocaleKeydown}
+              aria-activedescendant={`locale-option-${LOCALES[localeHighlight].code}`}
+              className="absolute top-full mt-1 left-0 z-50 bg-ink border border-coffee/60 rounded-lg overflow-hidden shadow-xl min-w-[160px] max-h-72 overflow-y-auto"
+            >
+              {LOCALES.map((l, i) => (
                 <button
                   key={l.code}
-                  onClick={() => handleLocaleChange(l.code)}
+                  id={`locale-option-${l.code}`}
+                  role="option"
+                  aria-selected={locale === l.code}
+                  onMouseEnter={() => setLocaleHighlight(i)}
+                  onClick={() => {
+                    handleLocaleChange(l.code);
+                    localeButtonRef.current?.focus();
+                  }}
                   className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-left transition-colors
                     ${
                       locale === l.code
                         ? "bg-amber text-ink font-semibold"
-                        : "text-cream/70 hover:bg-coffee/30 hover:text-cream"
+                        : i === localeHighlight
+                          ? "bg-coffee/40 text-cream"
+                          : "text-cream/70 hover:bg-coffee/30 hover:text-cream"
                     }`}
                 >
-                  <span>{l.flag}</span>
+                  <span aria-hidden="true">{l.flag}</span>
                   <span>{l.label}</span>
                 </button>
               ))}
@@ -258,29 +367,52 @@ export default function CvPreviewPanel({
         {/* Template Dropdown */}
         <div className="relative">
           <button
+            ref={templateButtonRef}
             onClick={() => {
               setTemplateOpen((v) => !v);
               setLocaleOpen(false);
             }}
+            aria-haspopup="listbox"
+            aria-expanded={templateOpen}
+            aria-controls="template-listbox"
+            aria-label={`Select template — current: ${selectedTemplate.label}`}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-coffee/60 text-sm text-cream/80 hover:text-cream transition-colors min-w-[180px] justify-between"
           >
             <span>{selectedTemplate.label}</span>
-            <span className="text-xs opacity-50">
+            <span className="text-xs opacity-50" aria-hidden="true">
               {templateOpen ? "\u25B2" : "\u25BC"}
             </span>
           </button>
 
           {templateOpen && (
-            <div className="absolute top-full mt-1 left-0 z-50 bg-ink border border-coffee/60 rounded-lg overflow-hidden shadow-xl min-w-[200px]">
-              {TEMPLATES.map((tpl) => (
+            <div
+              id="template-listbox"
+              ref={templateListRef}
+              role="listbox"
+              aria-label="Template options"
+              tabIndex={-1}
+              onKeyDown={handleTemplateKeydown}
+              aria-activedescendant={`template-option-${TEMPLATES[templateHighlight].code}`}
+              className="absolute top-full mt-1 left-0 z-50 bg-ink border border-coffee/60 rounded-lg overflow-hidden shadow-xl min-w-[200px]"
+            >
+              {TEMPLATES.map((tpl, i) => (
                 <button
                   key={tpl.code}
-                  onClick={() => handleTemplateChange(tpl.code)}
+                  id={`template-option-${tpl.code}`}
+                  role="option"
+                  aria-selected={template === tpl.code}
+                  onMouseEnter={() => setTemplateHighlight(i)}
+                  onClick={() => {
+                    handleTemplateChange(tpl.code);
+                    templateButtonRef.current?.focus();
+                  }}
                   className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-left transition-colors
                     ${
                       template === tpl.code
                         ? "bg-amber text-ink font-semibold"
-                        : "text-cream/70 hover:bg-coffee/30 hover:text-cream"
+                        : i === templateHighlight
+                          ? "bg-coffee/40 text-cream"
+                          : "text-cream/70 hover:bg-coffee/30 hover:text-cream"
                     }`}
                 >
                   <span>{tpl.label}</span>
@@ -319,8 +451,36 @@ export default function CvPreviewPanel({
         locale={locale}
         template={template}
         profileTitle={selectedProfile?.title}
+        profileId={selectedProfileId}
         disabled={!model || loading}
       />
+
+      {/* Version history + sharing (only when a profile is selected) */}
+      {selectedProfileId && (
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <VersionHistory
+            profileId={selectedProfileId}
+            model={model}
+            locale={locale}
+            template={template}
+            onRestore={handleRestoreModel}
+          />
+          <ShareResume
+            profileId={selectedProfileId}
+            model={model}
+            locale={locale}
+            template={template}
+            profileTitle={selectedProfile?.title}
+          />
+        </div>
+      )}
+
+      {restoredFromVersion && (
+        <p className="text-xs text-cream/40 mt-3">
+          Showing a restored version — refresh or re-download to sync with
+          your latest GitHub activity.
+        </p>
+      )}
     </div>
   );
 }

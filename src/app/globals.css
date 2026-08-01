@@ -27,6 +27,19 @@ body {
   font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
+/* Visible keyboard focus indicator — required for WCAG 2.4.7 Focus Visible.
+   Amber outline matches the brand palette and appears only for keyboard users. */
+:where(button, a, input, select, textarea, [role="option"], [role="listbox"], [role="button"]):focus-visible {
+  outline: 2px solid var(--color-amber-bright);
+  outline-offset: 2px;
+}
+
+/* Listbox menus receive focus programmatically (tabIndex=-1) — keep the ring
+   subtle so it doesn't visually fight the selected-option highlight. */
+[role="listbox"]:focus-visible {
+  outline-color: var(--color-coffee);
+}
+
 .font-display {
   font-family: "Georgia", "Times New Roman", serif;
 }
@@ -36,5 +49,36 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Print (PDF export) ──────────────────────────────────────────
+   The /print route renders only the CV sheet; these rules strip any
+   residual chrome so "Save as PDF" captures just the document. */
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #1a1a1a !important;
+  }
+
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-area {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .print-sheet {
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 12mm;
   }
 }

@@ -25,6 +25,7 @@ const VALID_LOCALES = new Set<string>([
 const VALID_TEMPLATES = new Set<string>([
   "classic_professional",
   "developer_card",
+  "minimal",
 ]);
 
 /**

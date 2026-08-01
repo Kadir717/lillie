@@ -6,11 +6,13 @@ export default function DownloadButton({
   locale,
   template,
   profileTitle,
+  profileId,
 }: {
   disabled?: boolean;
   locale: string;
   template: string;
   profileTitle?: string;
+  profileId?: string | null;
 }) {
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +41,7 @@ export default function DownloadButton({
   const templateName: Record<string, string> = {
     classic_professional: "Classic",
     developer_card: "DeveloperCard",
+    minimal: "Minimal",
   };
 
   async function handleDownload() {
@@ -46,7 +49,9 @@ export default function DownloadButton({
     setDownloading(true);
     try {
       const res = await fetch(
-        `/api/generate-cv?locale=${locale}&template=${template}`
+        `/api/generate-cv?locale=${locale}&template=${template}${
+          profileId ? `&profileId=${encodeURIComponent(profileId)}` : ""
+        }`
       );
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -81,15 +86,35 @@ export default function DownloadButton({
     }
   }
 
+  async function handleDownloadPdf() {
+    setError(null);
+    // The print page renders the exact same CvPreview full-size and opens
+    // the browser's print dialog ("Save as PDF"). No server PDF library.
+    window.open(
+      `/print?locale=${encodeURIComponent(locale)}&template=${encodeURIComponent(template)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
   return (
     <div className="flex flex-col items-start gap-2">
-      <button
-        onClick={handleDownload}
-        disabled={disabled || downloading}
-        className="w-full sm:w-auto bg-amber hover:bg-amber-bright disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-ink font-semibold px-8 py-3 rounded-xl"
-      >
-        {downloading ? "Generating..." : "Download CV (.docx)"}
-      </button>
+      <div className="flex flex-col sm:flex-row items-stretch gap-2 w-full sm:w-auto">
+        <button
+          onClick={handleDownload}
+          disabled={disabled || downloading}
+          className="w-full sm:w-auto bg-amber hover:bg-amber-bright disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-ink font-semibold px-8 py-3 rounded-xl"
+        >
+          {downloading ? "Generating..." : "Download CV (.docx)"}
+        </button>
+        <button
+          onClick={handleDownloadPdf}
+          disabled={disabled}
+          className="w-full sm:w-auto border border-coffee/60 hover:border-amber hover:text-amber disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-cream/80 px-8 py-3 rounded-xl"
+        >
+          Download PDF
+        </button>
+      </div>
       {error && (
         <p className="text-xs text-amber-bright/80">{error}</p>
       )}
