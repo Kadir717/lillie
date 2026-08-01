@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { fetchGithubAggregate } from "@/lib/github";
 import { mapGithubToCvModel } from "@/lib/cv-model";
-import { validateLocale } from "@/lib/validate";
 
 interface AtsScore {
   overall: number;
@@ -57,7 +56,6 @@ export async function GET(request: NextRequest) {
 
   const rawRole = request.nextUrl.searchParams.get("role");
   const role = validateRole(rawRole) ?? "software_engineer";
-  const locale = validateLocale(request.nextUrl.searchParams.get("locale") || "en") ?? "en";
 
   try {
     const data = await fetchGithubAggregate(

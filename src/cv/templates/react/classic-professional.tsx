@@ -9,7 +9,7 @@ export const classicProfessionalReactTemplate: CvReactTemplate = {
   id: "classic_professional",
   name: "Classic Professional",
 
-  renderHeader(model, t) {
+  renderHeader(model, _t) {
     return (
       <div
         style={{

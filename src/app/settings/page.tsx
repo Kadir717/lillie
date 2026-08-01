@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import SettingsForm from "./SettingsForm";
@@ -80,9 +81,11 @@ export default async function SettingsPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   {userData.avatarUrl && (
-                    <img
+                    <Image
                       src={userData.avatarUrl}
                       alt=""
+                      width={48}
+                      height={48}
                       className="w-12 h-12 rounded-full border border-coffee"
                     />
                   )}

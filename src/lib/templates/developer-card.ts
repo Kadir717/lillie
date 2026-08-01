@@ -27,7 +27,7 @@ export const developerCardTemplate: CvTemplate = {
   id: "developer_card",
   name: "Developer Card",
 
-  renderHeader(model, t) {
+  renderHeader(model, _t) {
     return [
       new Paragraph({
         shading: { fill: DARK_BG, type: ShadingType.CLEAR },

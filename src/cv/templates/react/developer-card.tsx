@@ -10,7 +10,7 @@ export const developerCardReactTemplate: CvReactTemplate = {
   id: "developer_card",
   name: "Developer Card",
 
-  renderHeader(model, t) {
+  renderHeader(model, _t) {
     return (
       <div
         style={{

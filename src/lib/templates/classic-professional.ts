@@ -21,7 +21,7 @@ export const classicProfessionalTemplate: CvTemplate = {
   id: "classic_professional",
   name: "Classic Professional",
 
-  renderHeader(model, t) {
+  renderHeader(model, _t) {
     const out: Paragraph[] = [
       new Paragraph({
         children: [new TextRun({ text: model.header.name, bold: true, size: 48, color: "1A1A1A" })],
