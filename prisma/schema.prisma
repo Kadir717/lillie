@@ -2,17 +2,9 @@
 // LILLIE — Prisma Database Schema
 // ═══════════════════════════════════════════════════════════════════
 //
-// Current database:   SQLite (local development)
-// Production target:  Turso (SQLite-compatible, Vercel-friendly)
-// Future upgrade:     PostgreSQL (via Neon, Supabase, etc.)
-//
-// The schema is designed so that switching the provider from
-// sqlite → postgresql requires only:
-//   1. Changing the `provider` field below
-//   2. Changing DATABASE_URL in your environment
-//   3. Running `npx prisma generate && npx prisma migrate deploy`
-//
-// No model changes needed — Prisma abstracts provider differences.
+// Current database:   Neon PostgreSQL (production & local via pg)
+// The provider is set to postgresql and DATABASE_URL points to
+// the appropriate Neon connection string in each environment.
 //
 // ── Design Decisions ─────────────────────────────────────────────
 //
@@ -54,14 +46,37 @@ model User {
 
   /// Preferred CV locale. Must be one of: en, tr, de, fr, es, pt, ja, ko, zh, ru, ar
   locale   String @default("en")
-  /// Preferred CV template ID. Must be one of: classic_professional, developer_card
+  /// Preferred CV template ID. Must be one of: classic_professional, developer_card, minimal
   template String @default("classic_professional")
+
+  /// ── Billing / entitlements ─────────────────────────────────────
+  /// Entitlement plan: free | pro | premium (see src/lib/billing/plans.ts)
+  plan String @default("free")
+  /// Subscription lifecycle: none | active | trialing | past_due | canceled
+  planStatus String @default("none")
+  /// When the current paid plan period ends (null for free / lifetime)
+  planExpiresAt DateTime?
+  /// Which payment provider holds the subscription ("stripe", "lemon_squeezy", ...).
+  /// NULL until a provider is configured — the app never hardcodes a provider.
+  billingProvider String?
+  /// Customer id at the payment provider
+  billingCustomerId String?
+  /// Subscription id at the payment provider
+  billingSubscriptionId String?
+  /// Internal role: user | admin (role-based access control)
+  role String @default("user")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   /// All CV profiles owned by this user
   profiles CvProfile[]
+  /// Jobs the user is tracking (job application pipeline)
+  jobs Job[]
+  /// Analytics events recorded for this user
+  analyticsEvents AnalyticsEvent[]
+  /// Daily GitHub stat snapshots (growth tracking)
+  githubSnapshots GithubSnapshot[]
 }
 
 /// A named CV configuration owned by a user.
@@ -76,12 +91,133 @@ model CvProfile {
   title    String @default("My CV")
   /// CV locale code. Must be one of: en, tr, de, fr, es, pt, ja, ko, zh, ru, ar
   locale   String @default("en")
-  /// CV template ID. Must be one of: classic_professional, developer_card
+  /// CV template ID. Must be one of: classic_professional, developer_card, minimal
   template String @default("classic_professional")
+
+  /// Snapshot of the CvModel JSON shown on the public share page.
+  /// Set when sharing is enabled; null when not shared.
+  shareModel   Json?
+  /// Random unguessable token for the public resume URL (/r/:token).
+  shareToken   String?  @unique
+  /// Whether the public share page is currently enabled.
+  shareEnabled Boolean  @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  versions CvVersion[]
+  /// Analytics events that reference this profile
+  analyticsEvents AnalyticsEvent[]
+
   @@unique([userId, title])
   @@index([userId])
+}
+
+/// A job the user is tracking (job search / application pipeline).
+/// Stores the posting details plus the last computed match snapshot so
+/// the list view can show scores without recomputing them.
+model Job {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Company name (required)
+  company String
+  /// Job title (required)
+  title String
+  /// Posting URL
+  url String?
+  /// Full job description text — used for keyword extraction + matching
+  description String?
+  /// Application stage: saved | applied | interviewing | offer | rejected | archived
+  status String @default("saved")
+  /// User priority: low | medium | high
+  priority String @default("medium")
+  /// Free-form notes
+  notes String?
+
+  /// When the user applied
+  appliedAt DateTime?
+  /// Posting deadline (optional)
+  deadline DateTime?
+
+  /// Last computed match score (0-100), cached on the row
+  matchScore Int?
+  /// Last computed match analysis snapshot (JobMatchResult JSON)
+  matchJson Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// An immutable snapshot of a CV configuration at a point in time.
+/// Enables resume history, versioning, and side-by-side comparison.
+model CvVersion {
+  id        String   @id @default(cuid())
+  profileId String
+  profile   CvProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  /// Optional human label, e.g. "Before refactor" or "v2"
+  label    String?
+  /// CvModel JSON snapshot (locale/template-agnostic, same shape as /api/cv-model)
+  model    Json
+  /// CV locale code at save time
+  locale   String @default("en")
+  /// CV template ID at save time
+  template String @default("classic_professional")
+
+  createdAt DateTime @default(now())
+
+  @@index([profileId, createdAt])
+}
+
+/// A single tracked usage event (download, public view, export, share).
+/// `userId` is null for public/anonymous events (e.g. a visitor viewing a
+/// shared resume), so public activity can be counted without exposing who
+/// the visitor is. `visitorHash` is a salted hash of the visitor's IP —
+/// never the raw IP — used only to estimate unique visitors.
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  /// Owning user; null for public/anonymous events
+  userId    String?
+  /// Target CV profile (when the event relates to one)
+  profileId String?
+  /// Event type: resume_view | cv_download | portfolio_export | portfolio_website | profile_share
+  type      String
+  /// Extra structured data (locale, template, format, theme, referrer...)
+  metadata  Json?
+  /// Salted hash of the visitor IP (unique-visitor estimation, privacy-safe)
+  visitorHash String?
+
+  createdAt DateTime @default(now())
+
+  user    User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile CvProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
+  @@index([profileId, type, createdAt])
+  @@index([type, createdAt])
+  @@index([visitorHash])
+}
+
+/// Daily snapshot of a user's public GitHub stats, used for growth charts.
+/// One row per user per UTC day (upserted), so trends are cheap to query.
+model GithubSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// UTC date (midnight) of the snapshot
+  date      DateTime
+  stars     Int
+  repos     Int
+  forks     Int
+  followers Int
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
