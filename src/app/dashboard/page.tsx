@@ -124,6 +124,12 @@ export default async function Dashboard() {
               Dashboard
             </a>
             <a
+              href="/jobs"
+              className="text-sm text-cream/40 hover:text-cream transition-colors"
+            >
+              Jobs
+            </a>
+            <a
               href="/settings"
               className="text-sm text-cream/40 hover:text-cream transition-colors"
             >
