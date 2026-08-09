@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import AppShell from "@/components/AppShell";
 import JobsPanel, { type JobListItem } from "@/components/JobsPanel";
 import type { JobStatus, JobPriority } from "@/lib/jobs/types";
 
@@ -60,49 +61,8 @@ export default async function JobsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-ink text-cream">
-      {/* Top navigation bar */}
-      <header className="border-b border-coffee/20 px-6 py-3">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <a
-              href="/dashboard"
-              className="text-lg font-semibold tracking-tight text-amber"
-            >
-              LILLIE
-            </a>
-          </div>
-          <nav className="flex items-center gap-4">
-            <a
-              href="/dashboard"
-              className="text-sm text-cream/60 hover:text-cream transition-colors"
-            >
-              Dashboard
-            </a>
-            <span className="text-sm text-cream">Jobs</span>
-            <a
-              href="/settings"
-              className="text-sm text-cream/40 hover:text-cream transition-colors"
-            >
-              Settings
-            </a>
-            <span className="text-sm text-cream/30">|</span>
-            <span className="text-sm text-cream/50">{session.githubUsername}</span>
-            <form action="/api/auth/logout" method="POST">
-              <button
-                type="submit"
-                className="text-sm text-cream/40 hover:text-cream/70 transition-colors"
-              >
-                Sign out
-              </button>
-            </form>
-          </nav>
-        </div>
-      </header>
-
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <JobsPanel initialJobs={jobs} initialError={loadError} />
-      </div>
-    </main>
+    <AppShell active="jobs" username={session.githubUsername}>
+      <JobsPanel initialJobs={jobs} initialError={loadError} />
+    </AppShell>
   );
 }

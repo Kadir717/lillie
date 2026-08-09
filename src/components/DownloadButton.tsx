@@ -103,20 +103,20 @@ export default function DownloadButton({
         <button
           onClick={handleDownload}
           disabled={disabled || downloading}
-          className="w-full sm:w-auto bg-amber hover:bg-amber-bright disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-ink font-semibold px-8 py-3 rounded-xl"
+          className="w-full sm:w-auto bg-signal hover:bg-signal/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white font-semibold px-8 py-3 rounded-xl"
         >
           {downloading ? "Generating..." : "Download CV (.docx)"}
         </button>
         <button
           onClick={handleDownloadPdf}
           disabled={disabled}
-          className="w-full sm:w-auto border border-coffee/60 hover:border-amber hover:text-amber disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-cream/80 px-8 py-3 rounded-xl"
+          className="w-full sm:w-auto border border-line hover:border-signal hover:text-signal disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-ink px-8 py-3 rounded-xl"
         >
           Download PDF
         </button>
       </div>
       {error && (
-        <p className="text-xs text-amber-bright/80">{error}</p>
+        <p className="text-xs text-red-500">{error}</p>
       )}
     </div>
   );

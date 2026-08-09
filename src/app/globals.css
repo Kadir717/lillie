@@ -3,13 +3,23 @@
 @tailwind utilities;
 
 :root {
+  /* Legacy dark-theme palette */
   --color-espresso: #2b1d14;
   --color-coffee: #4a3022;
   --color-cream: #f5ede1;
-  --color-paper: #fbf7f0;
   --color-amber: #c9842f;
   --color-amber-bright: #e0993f;
-  --color-ink: #1f1611;
+
+  /* New design system (light-first) */
+  --color-ink: #12131a;
+  --color-paper: #f6f5f2;
+  --color-cloud: #ffffff;
+  --color-signal: #5b4fe8;
+  --color-signal-tint: #eeedfe;
+  --color-grid: #2ea043;
+  --color-grid-tint: #eaf3de;
+  --color-slate: #6b7280;
+  --color-line: #e5e3dd;
 }
 
 @font-face {
@@ -18,26 +28,26 @@
 }
 
 html {
-  background-color: var(--color-ink);
+  background-color: var(--color-paper);
 }
 
 body {
-  background-color: var(--color-ink);
-  color: var(--color-cream);
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
 }
 
 /* Visible keyboard focus indicator — required for WCAG 2.4.7 Focus Visible.
-   Amber outline matches the brand palette and appears only for keyboard users. */
+   Signal (brand) outline appears only for keyboard users. */
 :where(button, a, input, select, textarea, [role="option"], [role="listbox"], [role="button"]):focus-visible {
-  outline: 2px solid var(--color-amber-bright);
+  outline: 2px solid var(--color-signal);
   outline-offset: 2px;
 }
 
 /* Listbox menus receive focus programmatically (tabIndex=-1) — keep the ring
    subtle so it doesn't visually fight the selected-option highlight. */
 [role="listbox"]:focus-visible {
-  outline-color: var(--color-coffee);
+  outline-color: var(--color-line);
 }
 
 .font-display {

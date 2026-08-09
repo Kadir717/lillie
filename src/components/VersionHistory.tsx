@@ -188,10 +188,10 @@ export default function VersionHistory({
   }
 
   return (
-    <div className="border border-coffee/20 rounded-xl p-5 space-y-4">
+    <div className="border border-line rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-cream">Resume History</h3>
-        <span className="text-[10px] uppercase tracking-widest text-cream/40">
+        <h3 className="text-sm font-semibold text-ink">Resume History</h3>
+        <span className="text-[10px] uppercase tracking-widest text-slate/60">
           {versions.length} version{versions.length === 1 ? "" : "s"}
         </span>
       </div>
@@ -207,24 +207,24 @@ export default function VersionHistory({
           }}
           placeholder="Label (e.g. v2, Before ATS pass)"
           disabled={!model || saving}
-          className="flex-1 bg-coffee/30 text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none placeholder:text-cream/30 disabled:opacity-40"
+          className="flex-1 bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none placeholder:text-slate disabled:opacity-40"
         />
         <button
           onClick={handleSave}
           disabled={!model || saving}
-          className="bg-amber hover:bg-amber-bright disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-ink font-semibold text-sm px-4 py-2 rounded-lg"
+          className="bg-signal hover:bg-signal/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white font-semibold text-sm px-4 py-2 rounded-lg"
         >
           {saving ? "Saving..." : "Save version"}
         </button>
       </div>
       {saved && (
-        <p className="text-xs text-emerald-400/90">Version saved.</p>
+        <p className="text-xs text-green-600">Version saved.</p>
       )}
-      {error && <p className="text-xs text-amber-bright/90">{error}</p>}
+      {error && <p className="text-xs text-red-500">{error}</p>}
 
       {/* Compare */}
-      <div className="border-t border-coffee/20 pt-4 space-y-3">
-        <p className="text-xs uppercase tracking-wide text-cream/40">
+      <div className="border-t border-line pt-4 space-y-3">
+        <p className="text-xs uppercase tracking-wide text-slate">
           Compare versions
         </p>
         <div className="flex flex-col sm:flex-row items-stretch gap-2">
@@ -235,7 +235,7 @@ export default function VersionHistory({
               setDiff(null);
               setCompareError(null);
             }}
-            className="flex-1 bg-coffee/30 text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none"
+            className="flex-1 bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none"
           >
             <option value="current">Current</option>
             {versions.map((v) => (
@@ -251,7 +251,7 @@ export default function VersionHistory({
               setDiff(null);
               setCompareError(null);
             }}
-            className="flex-1 bg-coffee/30 text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none"
+            className="flex-1 bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none"
           >
             <option value="">Select…</option>
             {versions.map((v) => (
@@ -263,24 +263,24 @@ export default function VersionHistory({
           <button
             onClick={() => handleCompare()}
             disabled={!versionB || compareLoading || versions.length === 0}
-            className="bg-coffee/40 hover:bg-coffee/60 disabled:opacity-40 transition-colors text-cream text-sm px-4 py-2 rounded-lg"
+            className="bg-paper border border-line hover:border-signal/40 disabled:opacity-40 transition-colors text-ink text-sm px-4 py-2 rounded-lg"
           >
             {compareLoading ? "Comparing..." : "Compare"}
           </button>
         </div>
 
         {compareError && (
-          <p className="text-xs text-amber-bright/90">{compareError}</p>
+          <p className="text-xs text-red-500">{compareError}</p>
         )}
         {diff && <DiffView diff={diff} />}
       </div>
 
       {/* Version list */}
-      <div className="border-t border-coffee/20 pt-4">
+      <div className="border-t border-line pt-4">
         {loading ? (
-          <p className="text-xs text-cream/40 py-2">Loading history…</p>
+          <p className="text-xs text-slate/60 py-2">Loading history…</p>
         ) : versions.length === 0 ? (
-          <p className="text-xs text-cream/40 py-2">
+          <p className="text-xs text-slate/60 py-2">
             No versions yet. Save your current CV to start a history.
           </p>
         ) : (
@@ -288,18 +288,18 @@ export default function VersionHistory({
             {versions.map((v) => (
               <li
                 key={v.id}
-                className="flex items-center gap-2 text-sm py-1 border-b border-coffee/10 last:border-0"
+                className="flex items-center gap-2 text-sm py-1 border-b border-line last:border-0"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-cream/80 truncate">
+                  <p className="text-ink/80 truncate">
                     {v.label || formatDate(v.createdAt)}
                     {!v.label && (
-                      <span className="text-cream/40 text-xs ml-2">
+                      <span className="text-slate/60 text-xs ml-2">
                         {formatDate(v.createdAt)}
                       </span>
                     )}
                   </p>
-                  <p className="text-[11px] text-cream/40">
+                  <p className="text-[11px] text-slate/70">
                     {localeName[v.locale] || v.locale} ·{" "}
                     {v.template.replace(/_/g, " ")}
                   </p>
@@ -307,7 +307,7 @@ export default function VersionHistory({
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => handleRestore(v.id)}
-                    className="text-xs text-cream/50 hover:text-amber transition-colors px-2 py-1"
+                    className="text-xs text-slate hover:text-signal transition-colors px-2 py-1"
                     title="Restore into preview"
                   >
                     Restore
@@ -318,7 +318,7 @@ export default function VersionHistory({
                       handleCompare(v.id);
                     }}
                     disabled={compareLoading}
-                    className="text-xs text-cream/50 hover:text-amber transition-colors px-2 py-1 disabled:opacity-30"
+                    className="text-xs text-slate hover:text-signal transition-colors px-2 py-1 disabled:opacity-30"
                     title="Compare this version against the selected baseline"
                   >
                     Compare
@@ -330,7 +330,7 @@ export default function VersionHistory({
                       }
                     }}
                     disabled={deleting === v.id}
-                    className="text-xs text-red-400/50 hover:text-red-400 transition-colors px-2 py-1 disabled:opacity-30"
+                    className="text-xs text-red-500/70 hover:text-red-500 transition-colors px-2 py-1 disabled:opacity-30"
                     title="Delete version"
                   >
                     {deleting === v.id ? "…" : "Delete"}
@@ -366,16 +366,16 @@ function DiffView({ diff }: { diff: VersionDiff }) {
 
   if (diff.identical || changeCount === 0) {
     return (
-      <p className="text-xs text-emerald-400/90">
+      <p className="text-xs text-green-600">
         These two versions are identical.
       </p>
     );
   }
 
   return (
-    <div className="text-xs space-y-2 bg-coffee/10 rounded-lg p-3">
-      <p className="text-cream/60">
-        <span className="font-semibold text-cream">{changeCount}</span> change
+    <div className="text-xs space-y-2 bg-paper border border-line rounded-lg p-3">
+      <p className="text-slate">
+        <span className="font-semibold text-ink">{changeCount}</span> change
         {changeCount === 1 ? "" : "s"}
       </p>
 
@@ -383,7 +383,7 @@ function DiffView({ diff }: { diff: VersionDiff }) {
         diff.header.bioChanged ||
         diff.header.contactsChanged) && (
         <div>
-          <p className="text-cream/40 uppercase tracking-wide mb-1">Header</p>
+          <p className="text-slate uppercase tracking-wide mb-1">Header</p>
           {diff.header.nameChanged && (
             <ChangeRow label="Name" changed />
           )}
@@ -401,7 +401,7 @@ function DiffView({ diff }: { diff: VersionDiff }) {
         diff.stats.forksChanged ||
         diff.stats.yearsChanged) && (
         <div>
-          <p className="text-cream/40 uppercase tracking-wide mb-1">Stats</p>
+          <p className="text-slate uppercase tracking-wide mb-1">Stats</p>
           {diff.stats.reposChanged && <ChangeRow label="Repos" changed />}
           {diff.stats.starsChanged && <ChangeRow label="Stars" changed />}
           {diff.stats.forksChanged && <ChangeRow label="Forks" changed />}
@@ -413,7 +413,7 @@ function DiffView({ diff }: { diff: VersionDiff }) {
         diff.languages.removed.length > 0 ||
         diff.languages.changed.length > 0) && (
         <div>
-          <p className="text-cream/40 uppercase tracking-wide mb-1">
+          <p className="text-slate uppercase tracking-wide mb-1">
             Languages
           </p>
           {diff.languages.added.map((name) => (
@@ -436,7 +436,7 @@ function DiffView({ diff }: { diff: VersionDiff }) {
         diff.projects.removed.length > 0 ||
         diff.projects.renamed.length > 0) && (
         <div>
-          <p className="text-cream/40 uppercase tracking-wide mb-1">
+          <p className="text-slate uppercase tracking-wide mb-1">
             Projects
           </p>
           {diff.projects.added.map((name) => (
@@ -465,18 +465,18 @@ function ChangeRow({
   changed?: boolean;
 }) {
   return (
-    <p className="flex items-center gap-2 text-cream/80">
+    <p className="flex items-center gap-2 text-ink/80">
       <span
         className={`w-1.5 h-1.5 rounded-full shrink-0 ${
           added
-            ? "bg-emerald-400"
+            ? "bg-green-600"
             : removed
-              ? "bg-red-400"
-              : "bg-amber"
+              ? "bg-red-500"
+              : "bg-signal"
         }`}
       />
       <span className="truncate">{label}</span>
-      <span className="ml-auto text-[10px] uppercase text-cream/30 shrink-0">
+      <span className="ml-auto text-[10px] uppercase text-slate/60 shrink-0">
         {added ? "added" : removed ? "removed" : "changed"}
       </span>
     </p>

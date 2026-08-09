@@ -66,13 +66,13 @@ export default function SettingsForm({
     <div className="space-y-5">
       {/* Locale selector */}
       <div>
-        <label className="text-xs uppercase tracking-wide text-cream/50 mb-2 block">
+        <label className="text-xs uppercase tracking-wide text-slate mb-2 block">
           Default Language
         </label>
         <select
           value={locale}
           onChange={(e) => setLocale(e.target.value)}
-          className="bg-ink border border-coffee/60 rounded-lg px-3 py-2 text-sm text-cream/80 w-full max-w-xs outline-none focus:border-amber transition-colors"
+          className="bg-cloud border border-line rounded-lg px-3 py-2 text-sm text-ink w-full max-w-xs outline-none focus:border-signal transition-colors"
         >
           {LOCALES.map((l) => (
             <option key={l.code} value={l.code}>
@@ -84,13 +84,13 @@ export default function SettingsForm({
 
       {/* Template selector */}
       <div>
-        <label className="text-xs uppercase tracking-wide text-cream/50 mb-2 block">
+        <label className="text-xs uppercase tracking-wide text-slate mb-2 block">
           Default Template
         </label>
         <select
           value={template}
           onChange={(e) => setTemplate(e.target.value)}
-          className="bg-ink border border-coffee/60 rounded-lg px-3 py-2 text-sm text-cream/80 w-full max-w-xs outline-none focus:border-amber transition-colors"
+          className="bg-cloud border border-line rounded-lg px-3 py-2 text-sm text-ink w-full max-w-xs outline-none focus:border-signal transition-colors"
         >
           {TEMPLATES.map((t) => (
             <option key={t.code} value={t.code}>
@@ -103,7 +103,7 @@ export default function SettingsForm({
       <button
         onClick={handleSave}
         disabled={saving}
-        className="bg-amber hover:bg-amber-bright disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-ink font-semibold px-6 py-2 rounded-lg text-sm"
+        className="bg-signal hover:bg-signal/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-white font-semibold px-6 py-2 rounded-lg text-sm"
       >
         {saving ? "Saving..." : "Save Preferences"}
       </button>
@@ -112,8 +112,8 @@ export default function SettingsForm({
         <p
           className={`text-sm ${
             message.type === "success"
-              ? "text-green-400"
-              : "text-amber-bright"
+              ? "text-green-600"
+              : "text-red-600"
           }`}
         >
           {message.text}

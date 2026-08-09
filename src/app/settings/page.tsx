@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import AppShell from "@/components/AppShell";
 import SettingsForm from "./SettingsForm";
 
 export default async function SettingsPage() {
@@ -38,45 +39,15 @@ export default async function SettingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-ink text-cream">
-      {/* Top navigation bar */}
-      <header className="border-b border-coffee/20 px-6 py-3">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <a
-              href="/dashboard"
-              className="text-lg font-semibold tracking-tight text-amber"
-            >
-              LILLIE
-            </a>
-          </div>
-          <nav className="flex items-center gap-4">
-            <a
-              href="/dashboard"
-              className="text-sm text-cream/50 hover:text-cream transition-colors"
-            >
-              Dashboard
-            </a>
-            <span className="text-sm text-cream/60">Settings</span>
-            <form action="/api/auth/logout" method="POST">
-              <button
-                type="submit"
-                className="text-sm text-cream/40 hover:text-cream/70 transition-colors"
-              >
-                Sign out
-              </button>
-            </form>
-          </nav>
-        </div>
-      </header>
-
-      <div className="max-w-3xl mx-auto px-6 py-12">
-        <h1 className="text-2xl font-semibold mb-8">Settings</h1>
-
-        <div className="space-y-8">
+    <AppShell
+      active="settings"
+      username={session.githubUsername}
+      contentWidth="narrow"
+    >
+      <div className="space-y-8">
           {/* Account Section */}
-          <section className="bg-coffee/10 border border-coffee/20 rounded-xl p-6">
-            <h2 className="text-lg font-medium text-cream mb-4">Account</h2>
+          <section className="bg-cloud border border-line rounded-card p-6">
+            <h2 className="text-lg font-medium text-ink mb-4">Account</h2>
             {userData ? (
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
@@ -86,31 +57,31 @@ export default async function SettingsPage() {
                       alt=""
                       width={48}
                       height={48}
-                      className="w-12 h-12 rounded-full border border-coffee"
+                      className="w-12 h-12 rounded-full border border-line"
                     />
                   )}
                   <div>
                     <p className="font-medium">{userData.name || userData.login}</p>
-                    <p className="text-sm text-cream/50">@{userData.login}</p>
+                    <p className="text-sm text-slate">@{userData.login}</p>
                   </div>
                 </div>
                 {userData.email && (
-                  <p className="text-sm text-cream/60">
+                  <p className="text-sm text-slate">
                     Email: {userData.email}
                   </p>
                 )}
-                <p className="text-xs text-cream/40">
+                <p className="text-xs text-slate">
                   Connected via GitHub OAuth. Profile data updates on each login.
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-cream/50">Unable to load account data.</p>
+              <p className="text-sm text-slate">Unable to load account data.</p>
             )}
           </section>
 
           {/* Preferences Section (client form for locale/template) */}
-          <section className="bg-coffee/10 border border-coffee/20 rounded-xl p-6">
-            <h2 className="text-lg font-medium text-cream mb-4">
+          <section className="bg-cloud border border-line rounded-card p-6">
+            <h2 className="text-lg font-medium text-ink mb-4">
               CV Preferences
             </h2>
             <SettingsForm
@@ -120,26 +91,26 @@ export default async function SettingsPage() {
           </section>
 
           {/* GitHub Connection */}
-          <section className="bg-coffee/10 border border-coffee/20 rounded-xl p-6">
-            <h2 className="text-lg font-medium text-cream mb-4">
+          <section className="bg-cloud border border-line rounded-card p-6">
+            <h2 className="text-lg font-medium text-ink mb-4">
               GitHub Connection
             </h2>
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-green-500" />
-              <span className="text-sm text-cream/70">
+              <div className="w-3 h-3 rounded-full bg-grid" />
+              <span className="text-sm text-slate">
                 Connected as{" "}
-                <strong className="text-cream">
+                <strong className="text-ink">
                   {userData?.login || session.githubUsername}
                 </strong>
               </span>
             </div>
-            <p className="text-xs text-cream/40 mt-2">
+            <p className="text-xs text-slate mt-2">
               Scopes: read:user, public_repo.{" "}
               <a
                 href={`https://github.com/settings/connections/applications/${process.env.GITHUB_CLIENT_ID || ""}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-amber hover:text-amber-bright underline"
+                className="text-signal hover:text-signal/80 underline transition-colors"
               >
                 Manage on GitHub
               </a>
@@ -147,24 +118,23 @@ export default async function SettingsPage() {
           </section>
 
           {/* Danger Zone */}
-          <section className="bg-coffee/10 border border-red-900/40 rounded-xl p-6">
-            <h2 className="text-lg font-medium text-red-400 mb-4">
+          <section className="bg-cloud border border-red-200 rounded-card p-6">
+            <h2 className="text-lg font-medium text-red-600 mb-4">
               Danger Zone
             </h2>
-            <p className="text-sm text-cream/60 mb-4">
+            <p className="text-sm text-slate mb-4">
               Deleting your account removes all stored preferences and CV
               profiles. Your GitHub data is not affected.
             </p>
             <button
               disabled
-              className="text-sm text-red-400/50 border border-red-900/40 px-4 py-2 rounded-lg cursor-not-allowed"
+              className="text-sm text-red-400 border border-red-200 px-4 py-2 rounded-lg cursor-not-allowed"
               title="Account deletion is not yet implemented"
             >
               Delete account
             </button>
           </section>
         </div>
-      </div>
-    </main>
+    </AppShell>
   );
 }

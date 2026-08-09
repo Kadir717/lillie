@@ -156,7 +156,7 @@ export default function ProfileSelector({
         aria-expanded={open}
         aria-controls="profile-listbox"
         aria-label={`CV profiles — current: ${selected ? selected.title : "none"}`}
-        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-coffee/60 text-sm text-cream/80 hover:text-cream transition-colors min-w-[200px] justify-between"
+        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-line bg-cloud text-sm text-ink hover:border-signal/40 transition-colors min-w-[200px] justify-between"
       >
         <span className="truncate">
           {selected ? selected.title : "Select profile..."}
@@ -177,12 +177,12 @@ export default function ProfileSelector({
           aria-activedescendant={
             profiles[highlightIndex] ? `profile-option-${profiles[highlightIndex].id}` : undefined
           }
-          className="absolute top-full mt-1 left-0 z-50 bg-ink border border-coffee/60 rounded-lg overflow-hidden shadow-xl min-w-[240px]"
+          className="absolute top-full mt-1 left-0 z-50 bg-cloud border border-line rounded-lg overflow-hidden shadow-lg min-w-[240px]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Existing profiles */}
           {profiles.length === 0 && !creating && (
-            <p className="px-4 py-3 text-xs text-cream/40">
+            <p className="px-4 py-3 text-xs text-slate">
               No profiles yet. Create one below.
             </p>
           )}
@@ -206,13 +206,13 @@ export default function ProfileSelector({
                     }
                   }}
                   aria-label="Profile name"
-                  className="flex-1 bg-coffee/30 text-cream text-sm px-2 py-1 rounded border border-coffee outline-none"
+                  className="flex-1 bg-paper text-ink text-sm px-2 py-1 rounded border border-line outline-none"
                   placeholder="Profile name"
                 />
                 <button
                   onClick={() => handleRename(p.id)}
                   disabled={busy || !newTitle.trim()}
-                  className="text-xs text-amber hover:text-amber-bright disabled:opacity-30 px-1"
+                  className="text-xs text-signal hover:text-signal/80 disabled:opacity-30 px-1"
                 >
                   Save
                 </button>
@@ -232,10 +232,10 @@ export default function ProfileSelector({
                 }
                 className={`flex items-center justify-between px-4 py-2 text-sm transition-colors cursor-pointer ${
                   p.id === selectedId
-                    ? "bg-amber/20 text-cream font-semibold"
+                    ? "bg-signal-tint text-ink font-semibold"
                     : profiles[highlightIndex]?.id === p.id
-                      ? "bg-coffee/40 text-cream"
-                      : "text-cream/70 hover:bg-coffee/30 hover:text-cream"
+                      ? "bg-line text-ink"
+                      : "text-slate hover:bg-paper hover:text-ink"
                 }`}
               >
                 <button
@@ -255,7 +255,7 @@ export default function ProfileSelector({
                       setNewTitle(p.title);
                     }}
                     aria-label={`Rename profile: ${p.title}`}
-                    className="text-xs text-cream/30 hover:text-cream/60 transition-colors px-1"
+                    className="text-xs text-slate hover:text-ink transition-colors px-1"
                     title="Rename"
                   >
                     <span aria-hidden="true">✎</span>
@@ -264,7 +264,7 @@ export default function ProfileSelector({
                     onClick={() => handleDelete(p.id)}
                     disabled={busy}
                     aria-label={`Delete profile: ${p.title}`}
-                    className="text-xs text-red-400/50 hover:text-red-400 transition-colors px-1 disabled:opacity-30"
+                    className="text-xs text-red-400/70 hover:text-red-500 transition-colors px-1 disabled:opacity-30"
                     title="Delete"
                   >
                     <span aria-hidden="true">✕</span>
@@ -276,7 +276,7 @@ export default function ProfileSelector({
 
           {/* Divider */}
           {profiles.length > 0 && !creating && (
-            <div className="border-t border-coffee/30 mx-2" />
+            <div className="border-t border-line mx-2" />
           )}
 
           {/* Create new */}
@@ -298,13 +298,13 @@ export default function ProfileSelector({
                   }
                 }}
                 aria-label="New profile name"
-                className="flex-1 bg-coffee/30 text-cream text-sm px-2 py-1 rounded border border-coffee outline-none"
+                className="flex-1 bg-paper text-ink text-sm px-2 py-1 rounded border border-line outline-none"
                 placeholder="e.g. Software Engineer"
               />
               <button
                 onClick={handleCreate}
                 disabled={busy || !newTitle.trim()}
-                className="text-xs text-amber hover:text-amber-bright disabled:opacity-30 px-1"
+                className="text-xs text-signal hover:text-signal/80 disabled:opacity-30 px-1"
               >
                 Create
               </button>
@@ -313,7 +313,7 @@ export default function ProfileSelector({
                   setCreating(false);
                   setNewTitle("");
                 }}
-                className="text-xs text-cream/40 hover:text-cream/70 px-1"
+                className="text-xs text-slate hover:text-ink px-1"
               >
                 Cancel
               </button>
@@ -324,9 +324,9 @@ export default function ProfileSelector({
                 setCreating(true);
                 setNewTitle("");
               }}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-cream/50 hover:text-cream hover:bg-coffee/20 transition-colors"
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate hover:text-ink hover:bg-paper transition-colors"
             >
-              <span aria-hidden="true" className="text-amber text-base leading-none">+</span>
+              <span aria-hidden="true" className="text-signal text-base leading-none">+</span>
               New profile
             </button>
           )}

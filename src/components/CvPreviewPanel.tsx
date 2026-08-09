@@ -288,7 +288,7 @@ export default function CvPreviewPanel({
     <div>
       {/* Profile selector */}
       <div className="mb-6">
-        <label className="text-xs uppercase tracking-wide text-cream/40 mb-2 block">
+        <label className="text-xs uppercase tracking-wide text-slate mb-2 block">
           CV Profile
         </label>
         <ProfileSelector
@@ -315,7 +315,7 @@ export default function CvPreviewPanel({
             aria-expanded={localeOpen}
             aria-controls="locale-listbox"
             aria-label={`Select language — current: ${selectedLocale.label}`}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-coffee/60 text-sm text-cream/80 hover:text-cream transition-colors min-w-[150px] justify-between"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-line bg-cloud text-sm text-ink hover:border-signal/40 transition-colors min-w-[150px] justify-between"
           >
             <span>
               {selectedLocale.flag} {selectedLocale.label}
@@ -334,7 +334,7 @@ export default function CvPreviewPanel({
               tabIndex={-1}
               onKeyDown={handleLocaleKeydown}
               aria-activedescendant={`locale-option-${LOCALES[localeHighlight].code}`}
-              className="absolute top-full mt-1 left-0 z-50 bg-ink border border-coffee/60 rounded-lg overflow-hidden shadow-xl min-w-[160px] max-h-72 overflow-y-auto"
+              className="absolute top-full mt-1 left-0 z-50 bg-cloud border border-line rounded-lg overflow-hidden shadow-lg min-w-[160px] max-h-72 overflow-y-auto"
             >
               {LOCALES.map((l, i) => (
                 <button
@@ -350,10 +350,10 @@ export default function CvPreviewPanel({
                   className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-left transition-colors
                     ${
                       locale === l.code
-                        ? "bg-amber text-ink font-semibold"
+                        ? "bg-signal-tint text-ink font-semibold"
                         : i === localeHighlight
-                          ? "bg-coffee/40 text-cream"
-                          : "text-cream/70 hover:bg-coffee/30 hover:text-cream"
+                          ? "bg-line text-ink"
+                          : "text-slate hover:bg-paper hover:text-ink"
                     }`}
                 >
                   <span aria-hidden="true">{l.flag}</span>
@@ -376,7 +376,7 @@ export default function CvPreviewPanel({
             aria-expanded={templateOpen}
             aria-controls="template-listbox"
             aria-label={`Select template — current: ${selectedTemplate.label}`}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-coffee/60 text-sm text-cream/80 hover:text-cream transition-colors min-w-[180px] justify-between"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-line bg-cloud text-sm text-ink hover:border-signal/40 transition-colors min-w-[180px] justify-between"
           >
             <span>{selectedTemplate.label}</span>
             <span className="text-xs opacity-50" aria-hidden="true">
@@ -393,7 +393,7 @@ export default function CvPreviewPanel({
               tabIndex={-1}
               onKeyDown={handleTemplateKeydown}
               aria-activedescendant={`template-option-${TEMPLATES[templateHighlight].code}`}
-              className="absolute top-full mt-1 left-0 z-50 bg-ink border border-coffee/60 rounded-lg overflow-hidden shadow-xl min-w-[200px]"
+              className="absolute top-full mt-1 left-0 z-50 bg-cloud border border-line rounded-lg overflow-hidden shadow-lg min-w-[200px]"
             >
               {TEMPLATES.map((tpl, i) => (
                 <button
@@ -409,10 +409,10 @@ export default function CvPreviewPanel({
                   className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-left transition-colors
                     ${
                       template === tpl.code
-                        ? "bg-amber text-ink font-semibold"
+                        ? "bg-signal-tint text-ink font-semibold"
                         : i === templateHighlight
-                          ? "bg-coffee/40 text-cream"
-                          : "text-cream/70 hover:bg-coffee/30 hover:text-cream"
+                          ? "bg-line text-ink"
+                          : "text-slate hover:bg-paper hover:text-ink"
                     }`}
                 >
                   <span>{tpl.label}</span>
@@ -424,12 +424,12 @@ export default function CvPreviewPanel({
       </div>
 
       {/* CV Preview */}
-      <div className="rounded-2xl shadow-2xl shadow-black/40 mb-8 overflow-auto bg-[#0d0d14] p-4 sm:p-8 flex justify-center">
+      <div className="rounded-2xl border border-line bg-paper mb-8 overflow-auto p-4 sm:p-8 flex justify-center">
         {loading && (
-          <p className="text-cream/50 text-sm py-12">Loading preview...</p>
+          <p className="text-slate text-sm py-12">Loading preview...</p>
         )}
         {!loading && error && (
-          <p className="text-amber-bright text-sm py-12">
+          <p className="text-red-600 text-sm py-12">
             Couldn&apos;t load your data for preview. Try refreshing the page.
           </p>
         )}
@@ -476,7 +476,7 @@ export default function CvPreviewPanel({
       )}
 
       {restoredFromVersion && (
-        <p className="text-xs text-cream/40 mt-3">
+        <p className="text-xs text-slate mt-3">
           Showing a restored version — refresh or re-download to sync with
           your latest GitHub activity.
         </p>

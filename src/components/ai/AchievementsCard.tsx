@@ -9,7 +9,7 @@ export default function AchievementsCard() {
       icon="🏆"
       status="coming_soon"
     >
-      <p className="text-sm text-cream/40 leading-relaxed">
+      <p className="text-sm text-slate leading-relaxed">
         Notable achievements from your open-source work will be highlighted
         here, including starred projects, significant contributions, and
         community impact.

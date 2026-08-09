@@ -48,16 +48,16 @@ export default function EmptyState({
       <span className="text-3xl mb-3" role="img" aria-hidden>
         {resolved.icon}
       </span>
-      <h4 className="text-sm font-medium text-cream/70 mb-1">
+      <h4 className="text-sm font-medium text-ink/80 mb-1">
         {title || resolved.title}
       </h4>
-      <p className="text-xs text-cream/40 max-w-xs leading-relaxed">
+      <p className="text-xs text-slate max-w-xs leading-relaxed">
         {description || resolved.description}
       </p>
       {action && (
         <button
           onClick={action.onClick}
-          className="mt-4 text-xs text-amber hover:text-amber-bright transition-colors underline underline-offset-2"
+          className="mt-4 text-xs text-signal hover:text-signal/80 transition-colors underline underline-offset-2"
         >
           {action.label}
         </button>

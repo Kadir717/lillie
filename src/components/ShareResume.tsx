@@ -122,21 +122,20 @@ export default function ShareResume({
   }
 
   return (
-    <div className="border border-coffee/20 rounded-xl p-5 space-y-4">
+    <div className="border border-line rounded-xl p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-cream">
+        <h3 className="text-sm font-semibold text-ink">
           Share this resume
         </h3>
-        {loading ? (
-          <span className="text-[10px] uppercase tracking-widest text-cream/30">
-            …
-          </span>
+        {loading ? (            <span className="text-[10px] uppercase tracking-widest text-slate/60">
+              …
+            </span>
         ) : (
           <span
             className={`text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full ${
               enabled
-                ? "bg-emerald-400/15 text-emerald-400"
-                : "bg-coffee/30 text-cream/40"
+                ? "bg-green-500/10 text-green-600"
+                : "bg-line text-slate"
             }`}
           >
             {enabled ? "Public" : "Private"}
@@ -151,7 +150,7 @@ export default function ShareResume({
           onClick={handleToggle}
           disabled={busy || loading}
           className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-            enabled ? "bg-emerald-500" : "bg-coffee/50"
+            enabled ? "bg-green-600" : "bg-slate/40"
           } disabled:opacity-40`}
           aria-label={
             enabled
@@ -160,35 +159,35 @@ export default function ShareResume({
           }
         >
           <span
-            className={`absolute top-0.5 w-5 h-5 rounded-full bg-cream transition-transform ${
+            className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
               enabled ? "translate-x-[22px]" : "translate-x-0.5"
             }`}
           />
         </button>
-        <span className="text-xs text-cream/60">
+        <span className="text-xs text-slate">
           {enabled
             ? "Anyone with the link can view this resume."
             : "Create a public link to share this resume."}
         </span>
       </div>
 
-      {error && <p className="text-xs text-amber-bright/90">{error}</p>}
+      {error && <p className="text-xs text-red-500">{error}</p>}
 
       {enabled && shareUrl && (
         <div className="flex flex-col sm:flex-row items-start gap-4">
           <div className="flex-1 min-w-0 space-y-2">
-            <p className="text-xs text-cream/40">Public link</p>
+            <p className="text-xs text-slate">Public link</p>
             <a
               href={shareUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-xs text-amber hover:text-amber-bright break-all transition-colors"
+              className="block text-xs text-signal hover:text-signal/80 break-all transition-colors"
             >
               {shareUrl}
             </a>
             <button
               onClick={handleCopy}
-              className="text-xs bg-coffee/40 hover:bg-coffee/60 transition-colors text-cream px-3 py-1.5 rounded-lg"
+              className="text-xs border border-line bg-paper hover:bg-line transition-colors text-ink px-3 py-1.5 rounded-lg"
             >
               {copied ? "Copied ✓" : "Copy link"}
             </button>
@@ -201,7 +200,7 @@ export default function ShareResume({
                 alt={`QR code for ${profileTitle || "this resume"} public link`}
                 className="w-[110px] h-[110px] rounded-lg bg-white p-1"
               />
-              <p className="text-[10px] text-cream/30 mt-1">Scan to view</p>
+              <p className="text-[10px] text-slate/60 mt-1">Scan to view</p>
             </div>
           )}
         </div>

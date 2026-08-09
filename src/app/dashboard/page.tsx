@@ -10,6 +10,7 @@ import {
   type GithubAnalyticsData,
 } from "@/lib/github-analytics";
 import { upsertGithubSnapshot } from "@/lib/analytics/growth";
+import AppShell from "@/components/AppShell";
 import CvPreviewPanel from "@/components/CvPreviewPanel";
 import GitHubInsights from "@/components/GitHubInsights";
 import GitHubAnalyticsPanel from "@/components/GitHubAnalyticsPanel";
@@ -107,113 +108,72 @@ export default async function Dashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-ink text-cream">
-      {/* Top navigation bar */}
-      <header className="border-b border-coffee/20 px-6 py-3">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-lg font-semibold tracking-tight text-amber">
-              LILLIE
-            </span>
-          </div>
-          <nav className="flex items-center gap-4">
-            <a
-              href="/dashboard"
-              className="text-sm text-cream/60 hover:text-cream transition-colors"
-            >
-              Dashboard
-            </a>
-            <a
-              href="/jobs"
-              className="text-sm text-cream/40 hover:text-cream transition-colors"
-            >
-              Jobs
-            </a>
+    <AppShell active="dashboard" username={session.githubUsername}>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Sidebar: insights + user card */}
+        <aside className="lg:col-span-1 space-y-6">
+          {/* User card */}
+          <div className="bg-cloud border border-line rounded-card p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <Image
+                src={session.githubAvatarUrl}
+                alt={session.githubUsername}
+                width={48}
+                height={48}
+                className="w-12 h-12 rounded-full border border-line"
+              />
+              <div>
+                <p className="font-medium text-sm text-ink">
+                  {session.githubUsername}
+                </p>
+                <p className="text-xs text-slate">Signed in with GitHub</p>
+              </div>
+            </div>
             <a
               href="/settings"
-              className="text-sm text-cream/40 hover:text-cream transition-colors"
+              className="inline-block text-xs text-signal hover:text-signal/80 transition-colors"
             >
-              Settings
+              Edit profile settings →
             </a>
-            <span className="text-sm text-cream/30">|</span>
-            <span className="text-sm text-cream/50">{session.githubUsername}</span>
-            <form action="/api/auth/logout" method="POST">
-              <button
-                type="submit"
-                className="text-sm text-cream/40 hover:text-cream/70 transition-colors"
-              >
-                Sign out
-              </button>
-            </form>
-          </nav>
-        </div>
-      </header>
+          </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Sidebar: insights + user card */}
-          <aside className="lg:col-span-1 space-y-6">
-            {/* User card */}
-            <div className="bg-coffee/10 border border-coffee/20 rounded-xl p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <Image
-                  src={session.githubAvatarUrl}
-                  alt={session.githubUsername}
-                  width={48}
-                  height={48}
-                  className="w-12 h-12 rounded-full border border-coffee"
-                />
-                <div>
-                  <p className="font-medium text-sm">{session.githubUsername}</p>
-                  <p className="text-xs text-cream/40">Signed in with GitHub</p>
-                </div>
-              </div>
-              <a
-                href="/settings"
-                className="inline-block text-xs text-cream/40 hover:text-cream/70 transition-colors"
-              >
-                Edit profile settings →
-              </a>
+          {/* GitHub Insights — data provided server-side, no client fetch */}
+          <GitHubInsights initialData={insights} />
+        </aside>
+
+        {/* Main: CV preview */}
+        <section className="lg:col-span-2">
+          <CvPreviewPanel
+            initialPrefs={initialPrefs}
+            initialProfiles={profiles}
+            initialModel={cvModel}
+          />
+
+          {/* ── GitHub Analytics — explainable, computed server-side ── */}
+          {insights && (
+            <div className="mt-10">
+              <GitHubAnalyticsPanel initialData={insights} />
             </div>
+          )}
 
-            {/* GitHub Insights — data provided server-side, no client fetch */}
-            <GitHubInsights initialData={insights} />
-          </aside>
-
-          {/* Main: CV preview */}
-          <section className="lg:col-span-2">
-            <CvPreviewPanel
-              initialPrefs={initialPrefs}
-              initialProfiles={profiles}
-              initialModel={cvModel}
-            />
-
-            {/* ── GitHub Analytics — explainable, computed server-side ── */}
-            {insights && (
-              <div className="mt-10">
-                <GitHubAnalyticsPanel initialData={insights} />
-              </div>
-            )}
-
-            {/* ── AI Insights Section ────────────────────────────── */}
-            <section className="mt-10">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-base font-semibold text-cream flex items-center gap-2">
-                  <span>AI Insights</span>
-                  <span className="text-[10px] uppercase tracking-widest text-amber/60 bg-amber/10 px-2 py-0.5 rounded-full">
-                    Coming Soon
-                  </span>
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <AISummaryCard />
-                <SkillsCard />
-                <AchievementsCard />
-              </div>
-            </section>
+          {/* ── AI Insights Section ────────────────────────────── */}
+          <section className="mt-10">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-semibold text-ink flex items-center gap-2">
+                <span>AI Insights</span>
+                <span className="text-[10px] uppercase tracking-widest text-signal bg-signal-tint px-2 py-0.5 rounded-full">
+                  Coming Soon
+                </span>
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <AISummaryCard />
+              <SkillsCard />
+              <AchievementsCard />
+            </div>
           </section>
-        </div>
+        </section>
       </div>
-    </main>
+    </AppShell>
   );
 }

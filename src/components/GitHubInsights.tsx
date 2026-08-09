@@ -63,10 +63,10 @@ export default function GitHubInsights({
 
   if (loading) {
     return (
-      <div className="bg-coffee/10 border border-coffee/20 rounded-xl p-5 animate-pulse">
-        <div className="h-4 bg-coffee/20 rounded w-1/3 mb-4" />
-        <div className="h-3 bg-coffee/20 rounded w-2/3 mb-2" />
-        <div className="h-3 bg-coffee/20 rounded w-1/2" />
+      <div className="bg-cloud border border-line rounded-card p-5 animate-pulse">
+        <div className="h-4 bg-line rounded w-1/3 mb-4" />
+        <div className="h-3 bg-line rounded w-2/3 mb-2" />
+        <div className="h-3 bg-line rounded w-1/2" />
       </div>
     );
   }
@@ -76,8 +76,8 @@ export default function GitHubInsights({
   return (
     <div className="space-y-6">
       {/* Contribution Summary */}
-      <div className="bg-coffee/10 border border-coffee/20 rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-cream mb-4">
+      <div className="bg-cloud border border-line rounded-card p-5">
+        <h3 className="text-sm font-semibold text-ink mb-4">
           Contribution Summary
         </h3>
         <div className="grid grid-cols-2 gap-3">
@@ -92,8 +92,8 @@ export default function GitHubInsights({
       </div>
 
       {/* Repository Health */}
-      <div className="bg-coffee/10 border border-coffee/20 rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-cream mb-4">
+      <div className="bg-cloud border border-line rounded-card p-5">
+        <h3 className="text-sm font-semibold text-ink mb-4">
           Repository Health
         </h3>
         <div className="grid grid-cols-2 gap-3">
@@ -113,21 +113,21 @@ export default function GitHubInsights({
 
       {/* Language Distribution */}
       {data.languageDistribution.length > 0 && (
-        <div className="bg-coffee/10 border border-coffee/20 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-cream mb-4">Languages</h3>
+        <div className="bg-cloud border border-line rounded-card p-5">
+          <h3 className="text-sm font-semibold text-ink mb-4">Languages</h3>
           <div className="space-y-2">
             {data.languageDistribution.map((lang) => (
               <div key={lang.name} className="flex items-center gap-3">
-                <span className="text-sm text-cream/80 w-24 truncate shrink-0">
+                <span className="text-sm text-ink w-24 truncate shrink-0">
                   {lang.name}
                 </span>
-                <div className="flex-1 h-2 bg-coffee/30 rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-line rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-amber rounded-full transition-all duration-500"
+                    className="h-full bg-grid rounded-full transition-all duration-500"
                     style={{ width: `${lang.percent}%` }}
                   />
                 </div>
-                <span className="text-xs text-cream/50 w-10 text-right shrink-0">
+                <span className="text-xs font-mono text-slate w-10 text-right shrink-0">
                   {lang.percent}%
                 </span>
               </div>
@@ -137,8 +137,8 @@ export default function GitHubInsights({
       )}
 
       {/* Project Maturity */}
-      <div className="bg-coffee/10 border border-coffee/20 rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-cream mb-4">
+      <div className="bg-cloud border border-line rounded-card p-5">
+        <h3 className="text-sm font-semibold text-ink mb-4">
           Project Maturity
         </h3>
         <div className="grid grid-cols-3 gap-3">
@@ -150,7 +150,7 @@ export default function GitHubInsights({
           />
         </div>
         {data.projectMaturity.mostRecentUpdate && (
-          <p className="text-xs text-cream/40 mt-3">
+          <p className="text-xs text-slate mt-3 font-mono">
             Last push:{" "}
             {new Date(
               data.projectMaturity.mostRecentUpdate
@@ -164,9 +164,9 @@ export default function GitHubInsights({
 
 function StatBox({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-ink/40 border border-coffee/20 rounded-lg px-3 py-2">
-      <p className="text-lg font-bold text-amber">{value}</p>
-      <p className="text-[10px] uppercase tracking-wide text-cream/40">
+    <div className="bg-paper border border-line rounded-lg px-3 py-2">
+      <p className="text-lg font-bold font-mono text-grid">{value}</p>
+      <p className="text-[10px] uppercase tracking-wide text-slate">
         {label}
       </p>
     </div>
