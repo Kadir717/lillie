@@ -225,7 +225,7 @@ export default function JobsPanel({
       <div className="flex items-start justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold">Jobs</h1>
-          <p className="text-sm text-cream/50 mt-1">
+          <p className="text-sm text-slate mt-1">
             Track your applications and see how well each role matches your GitHub profile.
           </p>
         </div>
@@ -242,7 +242,7 @@ export default function JobsPanel({
       {formOpen && (
         <form
           onSubmit={handleCreate}
-          className="bg-coffee/10 border border-coffee/20 rounded-xl p-5 mb-6 space-y-4"
+          className="bg-coffee border border-coffee/40 rounded-xl p-5 mb-6 space-y-4"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Company" required>
@@ -356,7 +356,7 @@ export default function JobsPanel({
 
       {/* Non-blocking action error */}
       {actionError && (
-        <div className="flex items-center justify-between gap-3 bg-red-900/20 border border-red-400/30 rounded-lg px-4 py-2.5 mb-4">
+        <div className="flex items-center justify-between gap-3 bg-red-900 border border-red-400/30 rounded-lg px-4 py-2.5 mb-4">
           <p className="text-xs text-red-300">{actionError}</p>
           <button
             onClick={() => setActionError(null)}
@@ -370,14 +370,14 @@ export default function JobsPanel({
 
       {/* Initial load failed */}
       {initialError && jobs.length === 0 && (
-        <div className="bg-red-900/20 border border-red-400/30 rounded-xl p-5 text-center">
+        <div className="bg-red-900 border border-red-400/30 rounded-xl p-5 text-center">
           <p className="text-sm text-red-300">Couldn&apos;t load your jobs. Please refresh the page.</p>
         </div>
       )}
 
       {/* Empty state */}
       {!initialError && jobs.length === 0 && (
-        <div className="bg-coffee/10 border border-coffee/20 rounded-xl">
+        <div className="bg-cloud border border-line rounded-xl">
           <EmptyState
             variant="no_data"
             title="No jobs tracked yet"
@@ -425,7 +425,7 @@ function JobCard({
   const priority = PRIORITY_META[job.priority] ?? PRIORITY_META.medium;
 
   return (
-    <div className="bg-coffee/10 border border-coffee/20 rounded-xl p-5">
+    <div className="bg-coffee border border-coffee/40 rounded-xl p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h3 className="font-medium text-cream truncate">{job.title}</h3>

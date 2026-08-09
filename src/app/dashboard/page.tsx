@@ -148,32 +148,32 @@ export default async function Dashboard() {
             initialProfiles={profiles}
             initialModel={cvModel}
           />
-
-          {/* ── GitHub Analytics — explainable, computed server-side ── */}
-          {insights && (
-            <div className="mt-10">
-              <GitHubAnalyticsPanel initialData={insights} />
-            </div>
-          )}
-
-          {/* ── AI Insights Section ────────────────────────────── */}
-          <section className="mt-10">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold text-ink flex items-center gap-2">
-                <span>AI Insights</span>
-                <span className="text-[10px] uppercase tracking-widest text-signal bg-signal-tint px-2 py-0.5 rounded-full">
-                  Coming Soon
-                </span>
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <AISummaryCard />
-              <SkillsCard />
-              <AchievementsCard />
-            </div>
-          </section>
         </section>
       </div>
+
+      {/* ── GitHub Analytics — full width, below the sidebar grid ── */}
+      {insights && (
+        <div className="mt-10">
+          <GitHubAnalyticsPanel initialData={insights} />
+        </div>
+      )}
+
+      {/* ── AI Insights Section ────────────────────────────── */}
+      <section className="mt-10">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-base font-semibold text-ink flex items-center gap-2">
+            <span>AI Insights</span>
+            <span className="text-[10px] uppercase tracking-widest text-signal bg-signal-tint px-2 py-0.5 rounded-full">
+              Coming Soon
+            </span>
+          </h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <AISummaryCard />
+          <SkillsCard />
+          <AchievementsCard />
+        </div>
+      </section>
     </AppShell>
   );
 }
