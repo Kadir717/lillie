@@ -6,19 +6,24 @@ import type { ReactNode } from "react";
  * Single source of truth for the top navigation bar used by every
  * authenticated app page. Renders:
  *   - logo → /dashboard
- *   - Dashboard / Jobs / Settings links (only routes that exist today;
- *     Interview & Portfolio join once their UI sprints land)
+ *   - Dashboard / Jobs / GitHub Analytics / Settings links (only routes
+ *     that exist today; Interview & Portfolio join once their UI sprints land)
  *   - active link with a 2px signal underline
  *   - GitHub username + sign out
+ *
+ * The header is sticky (top-0 z-20): z-20 stays below the z-50 popover
+ * dropdowns (ProfileSelector / CvPreviewPanel) so open menus can overlap
+ * the nav without being clipped.
  *
  * The content container uses the full available width (max 1440px) with
  * responsive padding (24px → 32px) instead of a narrow fixed column.
  */
-export type AppNavKey = "dashboard" | "jobs" | "settings";
+export type AppNavKey = "dashboard" | "jobs" | "analytics" | "settings";
 
 const NAV_LINKS: { key: AppNavKey; label: string; href: string }[] = [
   { key: "dashboard", label: "Dashboard", href: "/dashboard" },
   { key: "jobs", label: "Jobs", href: "/jobs" },
+  { key: "analytics", label: "GitHub Analytics", href: "/analytics" },
   { key: "settings", label: "Settings", href: "/settings" },
 ];
 
@@ -37,7 +42,7 @@ export default function AppShell({
   return (
     <main className="min-h-screen bg-paper text-ink">
       {/* Top navigation bar */}
-      <header className="border-b border-line bg-cloud">
+      <header className="sticky top-0 z-20 border-b border-line bg-cloud">
         <div className="max-w-[1440px] mx-auto px-6 md:px-8 flex items-center justify-between h-14">
           <a
             href="/dashboard"

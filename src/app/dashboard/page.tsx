@@ -13,7 +13,6 @@ import { upsertGithubSnapshot } from "@/lib/analytics/growth";
 import AppShell from "@/components/AppShell";
 import CvPreviewPanel from "@/components/CvPreviewPanel";
 import GitHubInsights from "@/components/GitHubInsights";
-import GitHubAnalyticsPanel from "@/components/GitHubAnalyticsPanel";
 import type { CvProfileData } from "@/components/ProfileSelector";
 import {
   AISummaryCard,
@@ -150,13 +149,6 @@ export default async function Dashboard() {
           />
         </section>
       </div>
-
-      {/* ── GitHub Analytics — full width, below the sidebar grid ── */}
-      {insights && (
-        <div className="mt-10">
-          <GitHubAnalyticsPanel initialData={insights} />
-        </div>
-      )}
 
       {/* ── AI Insights Section ────────────────────────────── */}
       <section className="mt-10">
