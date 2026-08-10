@@ -38,8 +38,8 @@ const STATUS_META: Record<JobStatus, { label: string }> = {
 };
 
 const PRIORITY_META: Record<JobPriority, { label: string; className: string }> = {
-  low: { label: "Low", className: "text-cream/50" },
-  medium: { label: "Medium", className: "text-amber" },
+  low: { label: "Low", className: "text-slate" },
+  medium: { label: "Medium", className: "text-signal" },
   high: { label: "High", className: "text-red-400" },
 };
 
@@ -65,10 +65,10 @@ const EMPTY_FORM: JobForm = {
   deadline: "",
 };
 
-/** Match-score colors mirror the GitHub analytics panel (≥70 / ≥40 / else). */
+/** Match-score colors: GitHub-derived data always uses the grid (green) token. */
 function scoreClass(score: number): string {
-  if (score >= 70) return "text-emerald-400";
-  if (score >= 40) return "text-amber";
+  if (score >= 70) return "text-grid";
+  if (score >= 40) return "text-grid";
   return "text-red-400";
 }
 
@@ -232,7 +232,7 @@ export default function JobsPanel({
         <button
           onClick={() => setFormOpen((v) => !v)}
           aria-expanded={formOpen}
-          className="shrink-0 px-4 py-2 rounded-lg bg-amber text-ink text-sm font-medium hover:bg-amber-bright transition-colors"
+          className="shrink-0 px-4 py-2 rounded-lg bg-signal text-white text-sm font-medium hover:bg-signal/90 transition-colors"
         >
           {formOpen ? "Cancel" : "+ Add job"}
         </button>
@@ -242,7 +242,7 @@ export default function JobsPanel({
       {formOpen && (
         <form
           onSubmit={handleCreate}
-          className="bg-coffee border border-coffee/40 rounded-xl p-5 mb-6 space-y-4"
+          className="bg-cloud border border-line rounded-xl p-5 mb-6 space-y-4"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Company" required>
@@ -252,7 +252,7 @@ export default function JobsPanel({
                 onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
                 maxLength={120}
                 placeholder="e.g. Acme Corp"
-                className="w-full bg-ink text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none focus:border-amber placeholder:text-cream/30"
+                className="w-full bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none focus:border-signal placeholder:text-slate/60"
               />
             </Field>
             <Field label="Job title" required>
@@ -262,7 +262,7 @@ export default function JobsPanel({
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                 maxLength={120}
                 placeholder="e.g. Senior Frontend Engineer"
-                className="w-full bg-ink text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none focus:border-amber placeholder:text-cream/30"
+                className="w-full bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none focus:border-signal placeholder:text-slate/60"
               />
             </Field>
             <Field label="Posting URL">
@@ -272,14 +272,14 @@ export default function JobsPanel({
                 onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
                 maxLength={500}
                 placeholder="https://…"
-                className="w-full bg-ink text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none focus:border-amber placeholder:text-cream/30"
+                className="w-full bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none focus:border-signal placeholder:text-slate/60"
               />
             </Field>
             <Field label="Status">
               <select
                 value={form.status}
                 onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as JobStatus }))}
-                className="w-full bg-ink text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none focus:border-amber [color-scheme:dark]"
+                className="w-full bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none focus:border-signal [color-scheme:light]"
               >
                 {JOB_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -292,7 +292,7 @@ export default function JobsPanel({
               <select
                 value={form.priority}
                 onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value as JobPriority }))}
-                className="w-full bg-ink text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none focus:border-amber [color-scheme:dark]"
+                className="w-full bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none focus:border-signal [color-scheme:light]"
               >
                 {JOB_PRIORITIES.map((p) => (
                   <option key={p} value={p}>
@@ -306,7 +306,7 @@ export default function JobsPanel({
                 type="date"
                 value={form.appliedAt}
                 onChange={(e) => setForm((f) => ({ ...f, appliedAt: e.target.value }))}
-                className="w-full bg-ink text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none focus:border-amber [color-scheme:dark]"
+                className="w-full bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none focus:border-signal [color-scheme:light]"
               />
             </Field>
             <Field label="Deadline">
@@ -314,7 +314,7 @@ export default function JobsPanel({
                 type="date"
                 value={form.deadline}
                 onChange={(e) => setForm((f) => ({ ...f, deadline: e.target.value }))}
-                className="w-full bg-ink text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none focus:border-amber [color-scheme:dark]"
+                className="w-full bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none focus:border-signal [color-scheme:light]"
               />
             </Field>
           </div>
@@ -325,7 +325,7 @@ export default function JobsPanel({
               maxLength={2000}
               rows={2}
               placeholder="Interview prep, contacts, links…"
-              className="w-full bg-ink text-cream text-sm px-3 py-2 rounded-lg border border-coffee/60 outline-none focus:border-amber placeholder:text-cream/30 resize-y"
+              className="w-full bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none focus:border-signal placeholder:text-slate/60 resize-y"
             />
           </Field>
 
@@ -335,7 +335,7 @@ export default function JobsPanel({
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 rounded-lg bg-amber text-ink text-sm font-medium hover:bg-amber-bright transition-colors disabled:opacity-40"
+              className="px-4 py-2 rounded-lg bg-signal text-white text-sm font-medium hover:bg-signal/90 transition-colors disabled:opacity-40"
             >
               {submitting ? "Adding…" : "Add job"}
             </button>
@@ -346,7 +346,7 @@ export default function JobsPanel({
                 setForm(EMPTY_FORM);
                 setFormError(null);
               }}
-              className="text-sm text-cream/50 hover:text-cream transition-colors"
+              className="text-sm text-slate hover:text-ink transition-colors"
             >
               Cancel
             </button>
@@ -425,11 +425,11 @@ function JobCard({
   const priority = PRIORITY_META[job.priority] ?? PRIORITY_META.medium;
 
   return (
-    <div className="bg-coffee border border-coffee/40 rounded-xl p-5">
+    <div className="bg-cloud border border-line rounded-xl p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="font-medium text-cream truncate">{job.title}</h3>
-          <p className="text-sm text-cream/60 truncate">{job.company}</p>
+          <h3 className="font-medium text-ink truncate">{job.title}</h3>
+          <p className="text-sm text-slate truncate">{job.company}</p>
         </div>
 
         {/* Match score (cached on the row by /api/jobs/[id]/match) */}
@@ -439,7 +439,7 @@ function JobCard({
               <p className={`text-2xl font-bold ${scoreClass(job.matchScore)}`}>
                 {job.matchScore}
               </p>
-              <p className="text-[10px] uppercase tracking-wide text-cream/40">
+              <p className="text-[10px] uppercase tracking-wide text-slate">
                 match /100
               </p>
             </>
@@ -447,7 +447,7 @@ function JobCard({
             <button
               onClick={() => onAnalyze(job)}
               disabled={analyzing || mutating}
-              className="text-xs text-amber hover:text-amber-bright border border-amber/30 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+              className="text-xs text-signal hover:text-signal/80 border border-signal/30 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
             >
               {analyzing ? "Analyzing…" : "Analyze match"}
             </button>
@@ -457,14 +457,14 @@ function JobCard({
 
       <div className="flex flex-wrap items-center gap-3 mt-4">
         {/* Status dropdown (PATCH on change) */}
-        <label className="flex items-center gap-2 text-xs text-cream/50">
+        <label className="flex items-center gap-2 text-xs text-slate">
           Status
           <select
             value={job.status}
             onChange={(e) => onStatusChange(job, e.target.value as JobStatus)}
             disabled={mutating}
             aria-label={`Status for ${job.title} at ${job.company}`}
-            className="bg-ink text-cream text-xs px-2 py-1.5 rounded-lg border border-coffee/60 outline-none focus:border-amber [color-scheme:dark] disabled:opacity-40 cursor-pointer"
+            className="bg-paper text-ink text-xs px-2 py-1.5 rounded-lg border border-line outline-none focus:border-signal [color-scheme:light] disabled:opacity-40 cursor-pointer"
           >
             {JOB_STATUSES.map((s) => (
               <option key={s} value={s}>
@@ -473,13 +473,13 @@ function JobCard({
             ))}
           </select>
           {mutating && (
-            <span className="text-[10px] text-cream/40 animate-pulse">Saving…</span>
+            <span className="text-[10px] text-slate animate-pulse">Saving…</span>
           )}
         </label>
 
         {/* Priority */}
         <span
-          className={`text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border border-coffee/40 ${priority.className}`}
+          className={`text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full border border-line ${priority.className}`}
         >
           {priority.label} priority
         </span>
@@ -490,13 +490,13 @@ function JobCard({
             href={job.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-amber hover:text-amber-bright underline underline-offset-2 truncate max-w-[200px]"
+            className="text-xs text-signal hover:text-signal/80 underline underline-offset-2 truncate max-w-[200px]"
           >
             View posting ↗
           </a>
         )}
 
-        <span className="text-[11px] text-cream/40 ml-auto">
+        <span className="text-[11px] text-slate ml-auto">
           Added {formatDate(job.createdAt)}
           {job.deadline && <> · deadline {formatDate(job.deadline)}</>}
         </span>
@@ -525,9 +525,9 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="text-xs uppercase tracking-wide text-cream/40 mb-1.5 block">
+      <span className="text-xs uppercase tracking-wide text-slate mb-1.5 block">
         {label}
-        {required && <span className="text-amber"> *</span>}
+        {required && <span className="text-signal"> *</span>}
       </span>
       {children}
     </label>
