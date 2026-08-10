@@ -87,6 +87,7 @@ export async function POST(
       );
     }
     if (err instanceof AiProviderError) {
+      console.error(`AI provider error for tool "${tool}":`, err.message);
       // Pass through upstream rate limits so clients can retry sensibly.
       const status = err.status === 429 ? 429 : 502;
       return NextResponse.json(
