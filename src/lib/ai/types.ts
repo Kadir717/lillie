@@ -47,6 +47,8 @@ export interface AiToolRequest {
   role?: string;
   /** Optional user interest for learning recommendations. */
   interest?: string;
+  /** Optional job posting text for tailoring tools (tailor). */
+  jobDescription?: string;
   /** Optional locale hint for the output language (e.g. "tr", "ar"). */
   locale?: string;
 }

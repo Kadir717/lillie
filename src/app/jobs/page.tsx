@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { fetchGithubAggregate } from "@/lib/github";
+import { mapGithubToCvModel } from "@/lib/cv-model";
 import AppShell from "@/components/AppShell";
 import JobsPanel, { type JobListItem } from "@/components/JobsPanel";
 import type { JobStatus, JobPriority } from "@/lib/jobs/types";
@@ -22,6 +24,20 @@ export default async function JobsPage() {
   let jobs: JobListItem[] = [];
   let loadError = false;
 
+  // Fetch the CvModel once (same pattern as the dashboard, minus the
+  // analytics computation) so the client JobsPanel can pass it to the
+  // tailor AI tool. No snapshot write here — the dashboard owns that.
+  let cvModel: ReturnType<typeof mapGithubToCvModel> | null = null;
+  try {
+    const githubData = await fetchGithubAggregate(
+      session.githubAccessToken,
+      session.githubUsername
+    );
+    cvModel = mapGithubToCvModel(githubData);
+  } catch {
+    // Model unavailable — the AI advice button degrades gracefully.
+  }
+
   try {
     const user = await prisma.user.findUnique({
       where: { githubId: session.githubId },
@@ -36,6 +52,7 @@ export default async function JobsPage() {
           company: true,
           title: true,
           url: true,
+          description: true,
           status: true,
           priority: true,
           matchScore: true,
@@ -62,7 +79,7 @@ export default async function JobsPage() {
 
   return (
     <AppShell active="jobs" username={session.githubUsername}>
-      <JobsPanel initialJobs={jobs} initialError={loadError} />
+      <JobsPanel initialJobs={jobs} initialError={loadError} model={cvModel} />
     </AppShell>
   );
 }

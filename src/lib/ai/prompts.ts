@@ -241,6 +241,50 @@ export function buildSkillGapPrompt(cvText: string, role: string, locale?: strin
   ];
 }
 
+const TAILOR_SCHEMA = `{
+  "fitScore": number (0-100),
+  "matchedStrengths": string[],
+  "gaps": string[],
+  "talkingPoints": string[],
+  "coverNote": string
+}`;
+
+/**
+ * Tailor — application advice for a SPECIFIC job posting. Compares the
+ * candidate's profile against the posted requirements and returns what to
+ * emphasize, what's missing, and a ready-to-send cover note opening.
+ */
+export function buildTailorPrompt(
+  cvText: string,
+  jobDescription: string,
+  locale?: string
+): AiMessage[] {
+  return [
+    {
+      role: "system",
+      content: system(
+        "You are a senior technical recruiter helping a job seeker apply for one specific position.",
+        "Analyze how the candidate's profile fits the job description provided by the user.",
+        "Ground every point in the candidate's actual profile data AND the specific job description text — never invent metrics, never give generic advice that could apply to any posting.",
+        "matchedStrengths = profile strengths that directly address THIS posting's requirements.",
+        "gaps = requirements in the posting that are missing or weakly evidenced in the profile.",
+        "talkingPoints = concrete, interview-ready points the candidate can emphasize in the application/interview.",
+        "coverNote = a 2-3 sentence application message / cover letter opening draft, written in the candidate's voice.",
+        `Return JSON exactly matching this schema: ${TAILOR_SCHEMA}`,
+        localeInstruction(locale),
+        JSON_ONLY
+      ),
+    },
+    {
+      role: "user",
+      content: userText(
+        cvText,
+        `The job posting to tailor this application for:\n"""\n${jobDescription}\n"""`
+      ),
+    },
+  ];
+}
+
 const CAREER_COACH_SCHEMA = `{
   "careerDirection": string,
   "advice": string[],

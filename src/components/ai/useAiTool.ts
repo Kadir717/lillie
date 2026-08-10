@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CvModel } from "@/lib/cv-model";
 
 /**
@@ -83,6 +83,74 @@ export function useAiTool<T>(
   }, [tool, model]);
 
   return state;
+}
+
+/**
+ * useAiToolAction — like useAiTool, but the fetch is triggered by a user
+ * action (button click) instead of firing on mount, and the request body
+ * can carry extra tool-specific fields (e.g. { jobDescription } for the
+ * tailor tool). Shares the exact same state machine as useAiTool.
+ */
+export function useAiToolAction<T>(
+  tool: string,
+  model: CvModel | null,
+  extra: Record<string, unknown> = {}
+): { state: AiToolState<T>; run: () => void } {
+  const [state, setState] = useState<AiToolState<T>>({ status: "idle" });
+  const [nonce, setNonce] = useState(0);
+
+  // Keep the latest `extra` in a ref so the effect only re-runs when the
+  // user actually triggers it (nonce bump), not on every parent re-render
+  // with a freshly-allocated `extra` object.
+  const extraRef = useRef(extra);
+  extraRef.current = extra;
+
+  useEffect(() => {
+    if (nonce === 0) return; // not triggered yet
+    if (!model) {
+      setState({ status: "idle" });
+      return;
+    }
+
+    let cancelled = false;
+    setState({ status: "loading" });
+
+    fetch(`/api/ai/${tool}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model, ...extraRef.current }),
+    })
+      .then(async (res) => {
+        if (cancelled) return;
+        const data = await res.json().catch(() => null);
+
+        if (res.status === 503) {
+          setState({ status: "unconfigured" });
+          return;
+        }
+        if (!res.ok) {
+          setState({
+            status: "error",
+            message: data?.error ?? "AI request failed.",
+          });
+          return;
+        }
+        setState({ status: "ready", result: (data?.result ?? null) as T });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setState({ status: "error", message: "Network error — please try again." });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tool, model, nonce]);
+
+  const run = useCallback(() => setNonce((n) => n + 1), []);
+
+  return { state, run };
 }
 
 /** Maps the hook state onto the AIInsightsCard status prop. */

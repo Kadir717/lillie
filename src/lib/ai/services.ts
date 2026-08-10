@@ -22,6 +22,7 @@ import {
   buildResumeRewritePrompt,
   buildSkillRecommendationPrompt,
   buildSkillGapPrompt,
+  buildTailorPrompt,
   buildCareerCoachPrompt,
   buildRoadmapPrompt,
   buildLearningPrompt,
@@ -334,6 +335,39 @@ export async function skillGap(body: AiToolRequest): Promise<SkillGapResult> {
   };
 }
 
+export interface TailorResult {
+  fitScore: number;
+  matchedStrengths: string[];
+  gaps: string[];
+  talkingPoints: string[];
+  coverNote: string;
+}
+
+/**
+ * Tailor — application advice for a specific job posting. Requires the
+ * posting text (jobDescription); throws AiInputError when it's missing so
+ * the route returns a clean 400 instead of a confusing 502.
+ */
+export async function tailorApplication(body: AiToolRequest): Promise<TailorResult> {
+  const model = extractModel(body);
+  const jobDescription =
+    typeof body.jobDescription === "string" ? body.jobDescription.trim() : "";
+  if (!jobDescription) {
+    throw new AiInputError("A job description is required.");
+  }
+  const raw = await completeJson<Record<string, unknown>>(
+    buildTailorPrompt(serializeModel(model), jobDescription, body.locale),
+    { temperature: 0.3, maxTokens: 1500 }
+  );
+  return {
+    fitScore: requireNumber(raw.fitScore, "fitScore"),
+    matchedStrengths: stringArray(raw.matchedStrengths),
+    gaps: stringArray(raw.gaps),
+    talkingPoints: stringArray(raw.talkingPoints),
+    coverNote: requireString(raw.coverNote, "coverNote"),
+  };
+}
+
 export interface CareerCoachResult {
   careerDirection: string;
   advice: string[];
@@ -446,6 +480,10 @@ export const aiTools = {
   "skill-gap": {
     description: "Compares the profile against a target role and lists missing skills.",
     run: skillGap,
+  },
+  tailor: {
+    description: "Tailored application advice for a specific job posting: fit score, strengths, gaps, talking points, cover note.",
+    run: tailorApplication,
   },
   "career-coach": {
     description: "Strategic career guidance: direction, quick wins, long-term plan.",

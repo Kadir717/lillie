@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import EmptyState from "./ai/EmptyState";
+import { useAiToolAction } from "./ai/useAiTool";
 import { JOB_STATUSES, JOB_PRIORITIES } from "@/lib/jobs/types";
 import type { JobStatus, JobPriority } from "@/lib/jobs/types";
+import type { CvModel } from "@/lib/cv-model";
+import type { TailorResult } from "@/lib/ai/services";
 
 /**
  * JobsPanel — job application tracking UI.
@@ -19,6 +22,7 @@ export interface JobListItem {
   company: string;
   title: string;
   url: string | null;
+  description: string | null;
   status: JobStatus;
   priority: JobPriority;
   matchScore: number | null;
@@ -47,6 +51,7 @@ interface JobForm {
   company: string;
   title: string;
   url: string;
+  description: string;
   notes: string;
   status: JobStatus;
   priority: JobPriority;
@@ -58,6 +63,7 @@ const EMPTY_FORM: JobForm = {
   company: "",
   title: "",
   url: "",
+  description: "",
   notes: "",
   status: "saved",
   priority: "medium",
@@ -82,9 +88,11 @@ function formatDate(iso: string | null): string {
 export default function JobsPanel({
   initialJobs = [],
   initialError = false,
+  model = null,
 }: {
   initialJobs?: JobListItem[];
   initialError?: boolean;
+  model?: CvModel | null;
 }) {
   const [jobs, setJobs] = useState<JobListItem[]>(initialJobs);
   const [formOpen, setFormOpen] = useState(false);
@@ -121,6 +129,7 @@ export default function JobsPanel({
         priority: form.priority,
       };
       if (form.url.trim()) payload.url = form.url.trim();
+      if (form.description.trim()) payload.description = form.description.trim();
       if (form.notes.trim()) payload.notes = form.notes.trim();
       if (form.appliedAt) payload.appliedAt = new Date(form.appliedAt).toISOString();
       if (form.deadline) payload.deadline = new Date(form.deadline).toISOString();
@@ -318,6 +327,16 @@ export default function JobsPanel({
               />
             </Field>
           </div>
+          <Field label="Job description (optional)">
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              maxLength={20000}
+              rows={5}
+              placeholder="Paste the job posting text here — LILLIE can give tailored application advice once you save it."
+              className="w-full bg-paper text-ink text-sm px-3 py-2 rounded-lg border border-line outline-none focus:border-signal placeholder:text-slate/60 resize-y"
+            />
+          </Field>
           <Field label="Notes">
             <textarea
               value={form.notes}
@@ -394,6 +413,7 @@ export default function JobsPanel({
             <JobCard
               key={job.id}
               job={job}
+              model={model}
               mutating={mutatingId === job.id}
               analyzing={analyzingId === job.id}
               onStatusChange={handleStatusChange}
@@ -409,6 +429,7 @@ export default function JobsPanel({
 
 function JobCard({
   job,
+  model,
   mutating,
   analyzing,
   onStatusChange,
@@ -416,6 +437,7 @@ function JobCard({
   onAnalyze,
 }: {
   job: JobListItem;
+  model: CvModel | null;
   mutating: boolean;
   analyzing: boolean;
   onStatusChange: (job: JobListItem, status: JobStatus) => void;
@@ -423,6 +445,12 @@ function JobCard({
   onAnalyze: (job: JobListItem) => void;
 }) {
   const priority = PRIORITY_META[job.priority] ?? PRIORITY_META.medium;
+
+  // AI application advice — only meaningful when the job has a saved
+  // description; the button triggers a POST /api/ai/tailor on demand.
+  const advice = useAiToolAction<TailorResult>("tailor", model, {
+    jobDescription: job.description ?? "",
+  });
 
   return (
     <div className="bg-cloud border border-line rounded-xl p-5">
@@ -432,8 +460,8 @@ function JobCard({
           <p className="text-sm text-slate truncate">{job.company}</p>
         </div>
 
-        {/* Match score (cached on the row by /api/jobs/[id]/match) */}
-        <div className="text-right shrink-0">
+        {/* Match score (cached on the row by /api/jobs/[id]/match) + AI advice */}
+        <div className="text-right shrink-0 flex flex-col items-end gap-2">
           {job.matchScore !== null ? (
             <>
               <p className={`text-2xl font-bold ${scoreClass(job.matchScore)}`}>
@@ -452,8 +480,102 @@ function JobCard({
               {analyzing ? "Analyzing…" : "Analyze match"}
             </button>
           )}
+
+          {/* AI application advice (tailor) — requires a saved description */}
+          {job.description ? (
+            <button
+              onClick={advice.run}
+              disabled={advice.state.status === "loading" || !model}
+              className="text-xs text-signal hover:text-signal/80 border border-signal/30 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+            >
+              {advice.state.status === "loading"
+                ? "Getting advice…"
+                : "Get application advice"}
+            </button>
+          ) : (
+            <span className="text-[10px] text-slate">
+              Add a job description to get AI advice
+            </span>
+          )}
         </div>
       </div>
+
+      {/* AI advice result (tailor tool output) */}
+      {advice.state.status === "ready" && (
+        <div className="mt-4 bg-paper border border-line rounded-lg p-4 space-y-3">
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold font-mono text-grid">
+              {advice.state.result.fitScore}
+            </span>
+            <span className="text-[10px] uppercase tracking-wide text-slate">
+              fit /100
+            </span>
+          </div>
+          {advice.state.result.matchedStrengths.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-slate mb-1.5">
+                Matched strengths
+              </p>
+              <ul className="space-y-1">
+                {advice.state.result.matchedStrengths.map((s, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-ink">
+                    <span className="text-grid shrink-0">✓</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {advice.state.result.gaps.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-slate mb-1.5">
+                Gaps to address
+              </p>
+              <ul className="space-y-1">
+                {advice.state.result.gaps.map((g, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-ink">
+                    <span className="text-red-400 shrink-0">✗</span>
+                    <span>{g}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {advice.state.result.talkingPoints.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-slate mb-1.5">
+                Talking points
+              </p>
+              <ul className="space-y-1">
+                {advice.state.result.talkingPoints.map((t, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs text-ink">
+                    <span className="text-signal shrink-0">→</span>
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {advice.state.result.coverNote && (
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-slate mb-1.5">
+                Cover note draft
+              </p>
+              <p className="text-xs text-ink leading-relaxed">
+                {advice.state.result.coverNote}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+      {advice.state.status === "unconfigured" && (
+        <p className="mt-3 text-xs text-slate">
+          AI is not configured on this deployment yet.
+        </p>
+      )}
+      {advice.state.status === "error" && (
+        <p className="mt-3 text-xs text-red-400">{advice.state.message}</p>
+      )}
 
       <div className="flex flex-wrap items-center gap-3 mt-4">
         {/* Status dropdown (PATCH on change) */}
