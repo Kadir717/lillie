@@ -18,6 +18,11 @@ node_modules/.prisma/
 # Freebuff
 .freebuff/
 
+# AI skills (installed via `npx skills` — local tooling, not app code)
+.agents/
+.claude/
+skills-lock.json
+
 # Temporary files
 *.tmp
 *.bak
