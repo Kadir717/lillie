@@ -9,10 +9,12 @@ import { useAiTool, toInsightsStatus } from "./useAiTool";
 
 export default function AISummaryCard({
   model,
+  delayMs = 0,
 }: {
   model: CvModel | null;
+  delayMs?: number;
 }) {
-  const state = useAiTool<ResumeReviewResult>("resume-review", model);
+  const state = useAiTool<ResumeReviewResult>("resume-review", model, delayMs);
 
   return (
     <AIInsightsCard

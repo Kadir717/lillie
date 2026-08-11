@@ -8,7 +8,9 @@ import type { CvModel } from "@/lib/cv-model";
  * POST /api/ai/[tool] and tracks the request lifecycle.
  *
  * The server component owns the CvModel (no GitHub re-fetch); this hook
- * only serializes it into the AI endpoint. States:
+ * only serializes it into the AI endpoint.
+ *
+ * States:
  *   idle         — model prop is null (nothing to analyze)
  *   loading      — fetch in flight
  *   ready        — 200, `result` holds the tool's typed payload
@@ -34,7 +36,14 @@ export type AiInsightsStatus =
 
 export function useAiTool<T>(
   tool: string,
-  model: CvModel | null
+  model: CvModel | null,
+  /**
+   * Stagger the initial mount fetch. The three dashboard cards pass
+   * 0 / 600 / 1200 ms so their parallel burst becomes sequential —
+   * Gemini free tier is ~10-15 RPM, so firing 3 LLM calls at once is
+   * what exhausts the budget after a few page loads.
+   */
+  delayMs = 0
 ): AiToolState<T> {
   const [state, setState] = useState<AiToolState<T>>(() =>
     model ? { status: "loading" } : { status: "idle" }
@@ -47,40 +56,61 @@ export function useAiTool<T>(
     }
 
     let cancelled = false;
-    setState({ status: "loading" });
 
-    fetch(`/api/ai/${tool}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model }),
-    })
-      .then(async (res) => {
-        if (cancelled) return;
-        const data = await res.json().catch(() => null);
+    const startFetch = () => {
+      if (cancelled) return;
+      setState({ status: "loading" });
 
-        if (res.status === 503) {
-          setState({ status: "unconfigured" });
-          return;
-        }
-        if (!res.ok) {
-          setState({
-            status: "error",
-            message: data?.error ?? "AI request failed.",
-          });
-          return;
-        }
-        setState({ status: "ready", result: (data?.result ?? null) as T });
+      fetch(`/api/ai/${tool}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model }),
       })
-      .catch(() => {
-        if (!cancelled) {
-          setState({ status: "error", message: "Network error — please try again." });
-        }
-      });
+        .then(async (res) => {
+          if (cancelled) return;
+          const data = await res.json().catch(() => null);
 
+          if (res.status === 503) {
+            setState({ status: "unconfigured" });
+            return;
+          }
+          if (res.status === 429) {
+            setState({
+              status: "error",
+              message: "AI is busy — try again in a moment.",
+            });
+            return;
+          }
+          if (!res.ok) {
+            setState({
+              status: "error",
+              message: data?.error ?? "AI request failed.",
+            });
+            return;
+          }
+          setState({ status: "ready", result: (data?.result ?? null) as T });
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setState({ status: "error", message: "Network error — please try again." });
+          }
+        });
+    };
+
+    // Stagger only the initial mount fetch (see delayMs doc above).
+    if (delayMs > 0) {
+      const timer = setTimeout(startFetch, delayMs);
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
+    }
+
+    startFetch();
     return () => {
       cancelled = true;
     };
-  }, [tool, model]);
+  }, [tool, model, delayMs]);
 
   return state;
 }
@@ -126,6 +156,13 @@ export function useAiToolAction<T>(
 
         if (res.status === 503) {
           setState({ status: "unconfigured" });
+          return;
+        }
+        if (res.status === 429) {
+          setState({
+            status: "error",
+            message: "AI is busy — try again in a moment.",
+          });
           return;
         }
         if (!res.ok) {

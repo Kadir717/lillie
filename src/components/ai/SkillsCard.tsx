@@ -7,10 +7,17 @@ import EmptyState from "./EmptyState";
 import { SkillsSkeleton } from "./LoadingState";
 import { useAiTool, toInsightsStatus } from "./useAiTool";
 
-export default function SkillsCard({ model }: { model: CvModel | null }) {
+export default function SkillsCard({
+  model,
+  delayMs = 0,
+}: {
+  model: CvModel | null;
+  delayMs?: number;
+}) {
   const state = useAiTool<SkillRecommendationResult>(
     "skill-recommendation",
-    model
+    model,
+    delayMs
   );
 
   return (

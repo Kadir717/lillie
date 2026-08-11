@@ -9,13 +9,15 @@ import { useAiTool, toInsightsStatus } from "./useAiTool";
 
 export default function AchievementsCard({
   model,
+  delayMs = 0,
 }: {
   model: CvModel | null;
+  delayMs?: number;
 }) {
   // career-coach is the best fit for "Key Achievements": its `quickWins`
   // are concrete, near-term wins — closer to achievements than the phased
   // roadmap output. (roadmap stays unused to keep the mapping one-to-one.)
-  const state = useAiTool<CareerCoachResult>("career-coach", model);
+  const state = useAiTool<CareerCoachResult>("career-coach", model, delayMs);
 
   return (
     <AIInsightsCard

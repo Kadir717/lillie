@@ -162,8 +162,8 @@ export default async function Dashboard() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <AISummaryCard model={cvModel} />
-          <SkillsCard model={cvModel} />
-          <AchievementsCard model={cvModel} />
+          <SkillsCard model={cvModel} delayMs={600} />
+          <AchievementsCard model={cvModel} delayMs={1200} />
         </div>
       </section>
     </AppShell>
