@@ -36,15 +36,16 @@ export default async function Home({
           <h1 className="font-display text-5xl sm:text-6xl leading-[1.05] tracking-tight mb-6">
             Your GitHub already
             <br />
-            <span className="text-amber-bright">wrote your CV.</span>
+            <span className="text-amber-bright">wrote your story.</span>
             <br />
-            We just print it.
+            We just tell it better.
           </h1>
 
           <p className="text-lg text-cream/70 max-w-xl mx-auto mb-10 leading-relaxed">
             Sign in with GitHub, and LILLIE turns your real commits, repos, and
-            languages into a polished CV — ready to download as a Word document
-            in under 30 seconds. No forms. No fluff.
+            languages into a polished CV — then goes further: match your profile
+            to real job postings, track applications, and get AI-powered advice
+            at every step. No forms. No fluff.
           </p>
 
           {error && (

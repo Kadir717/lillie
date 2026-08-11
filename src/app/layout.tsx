@@ -22,9 +22,9 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
-  title: "LILLIE — Turn your GitHub into a CV in 30 seconds",
+  title: "LILLIE — Turn your GitHub into more than a CV",
   description:
-    "Generate a polished, job-ready CV from your GitHub activity. No forms, no typing — just sign in and download.",
+    "Turn your GitHub activity into a polished CV, track job applications, and get AI-powered advice — no forms, no typing, just sign in.",
   applicationName: "LILLIE",
   keywords: [
     "CV generator",
@@ -39,15 +39,15 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: APP_URL,
     siteName: "LILLIE",
-    title: "LILLIE — Turn your GitHub into a CV in 30 seconds",
+    title: "LILLIE — Turn your GitHub into more than a CV",
     description:
-      "Generate a polished, job-ready CV from your GitHub activity. No forms, no typing — just sign in and download.",
+      "Turn your GitHub activity into a polished CV, track job applications, and get AI-powered advice — no forms, no typing, just sign in.",
   },
   twitter: {
     card: "summary",
-    title: "LILLIE — Turn your GitHub into a CV in 30 seconds",
+    title: "LILLIE — Turn your GitHub into more than a CV",
     description:
-      "Generate a polished, job-ready CV from your GitHub activity.",
+      "Turn your GitHub activity into a polished CV and AI-powered job advice — no forms, no typing.",
   },
   robots: {
     index: true,
