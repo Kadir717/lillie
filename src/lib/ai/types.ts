@@ -49,6 +49,11 @@ export interface AiToolRequest {
   interest?: string;
   /** Optional job posting text for tailoring tools (tailor). */
   jobDescription?: string;
+  /**
+   * When true, bypasses the 24h result cache and forces a fresh LLM call.
+   * The fresh result still refreshes the cached copy. Defaults to false.
+   */
+  regenerate?: boolean;
   /** Optional locale hint for the output language (e.g. "tr", "ar"). */
   locale?: string;
 }

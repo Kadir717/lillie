@@ -484,7 +484,7 @@ function JobCard({
           {/* AI application advice (tailor) — requires a saved description */}
           {job.description ? (
             <button
-              onClick={advice.run}
+              onClick={() => advice.run()}
               disabled={advice.state.status === "loading" || !model}
               className="text-xs text-signal hover:text-signal/80 border border-signal/30 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
             >

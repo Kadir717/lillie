@@ -8,7 +8,9 @@ import type { CvModel } from "@/lib/cv-model";
  * POST /api/ai/[tool] and tracks the request lifecycle.
  *
  * The server component owns the CvModel (no GitHub re-fetch); this hook
- * only serializes it into the AI endpoint.
+ * only serializes it into the AI endpoint. The API route caches results
+ * per (user, tool, input) for 24h, so repeat mounts are served from the
+ * database with zero LLM calls; `regenerate()` forces a fresh call.
  *
  * States:
  *   idle         — model prop is null (nothing to analyze)
@@ -38,33 +40,49 @@ export function useAiTool<T>(
   tool: string,
   model: CvModel | null,
   /**
-   * Stagger the initial mount fetch. The three dashboard cards pass
-   * 0 / 600 / 1200 ms so their parallel burst becomes sequential —
-   * Gemini free tier is ~10-15 RPM, so firing 3 LLM calls at once is
-   * what exhausts the budget after a few page loads.
+   * Stagger the initial mount fetch (regenerate always starts immediately).
+   * The three dashboard cards pass 0 / 600 / 1200 ms so their parallel burst
+   * becomes sequential — Gemini free tier is ~10-15 RPM, so firing 3 LLM
+   * calls at once is what exhausts the budget after a few page loads.
    */
   delayMs = 0
-): AiToolState<T> {
+): {
+  state: AiToolState<T>;
+  /** True while a regenerate request is in flight (old result stays visible). */
+  isRegenerating: boolean;
+  /** Bypasses the 24h result cache and refetches from the LLM. */
+  regenerate: () => void;
+} {
   const [state, setState] = useState<AiToolState<T>>(() =>
     model ? { status: "loading" } : { status: "idle" }
   );
+  const [nonce, setNonce] = useState(0);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   useEffect(() => {
     if (!model) {
       setState({ status: "idle" });
+      setIsRegenerating(false);
       return;
     }
 
     let cancelled = false;
+    // nonce 0 = initial mount (skeleton). nonce > 0 = regenerate — keep the
+    // previous result visible while the fresh copy is being fetched.
+    const regenerating = nonce > 0;
 
     const startFetch = () => {
       if (cancelled) return;
-      setState({ status: "loading" });
+      if (regenerating) {
+        setIsRegenerating(true);
+      } else {
+        setState({ status: "loading" });
+      }
 
       fetch(`/api/ai/${tool}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model }),
+        body: JSON.stringify(regenerating ? { model, regenerate: true } : { model }),
       })
         .then(async (res) => {
           if (cancelled) return;
@@ -94,12 +112,16 @@ export function useAiTool<T>(
           if (!cancelled) {
             setState({ status: "error", message: "Network error — please try again." });
           }
+        })
+        .finally(() => {
+          if (!cancelled) setIsRegenerating(false);
         });
     };
 
     // Stagger only the initial mount fetch (see delayMs doc above).
-    if (delayMs > 0) {
-      const timer = setTimeout(startFetch, delayMs);
+    const delay = nonce === 0 ? delayMs : 0;
+    if (delay > 0) {
+      const timer = setTimeout(startFetch, delay);
       return () => {
         cancelled = true;
         clearTimeout(timer);
@@ -110,9 +132,11 @@ export function useAiTool<T>(
     return () => {
       cancelled = true;
     };
-  }, [tool, model, delayMs]);
+  }, [tool, model, nonce, delayMs]);
 
-  return state;
+  const regenerate = useCallback(() => setNonce((n) => n + 1), []);
+
+  return { state, isRegenerating, regenerate };
 }
 
 /**
@@ -120,12 +144,15 @@ export function useAiTool<T>(
  * action (button click) instead of firing on mount, and the request body
  * can carry extra tool-specific fields (e.g. { jobDescription } for the
  * tailor tool). Shares the exact same state machine as useAiTool.
+ *
+ * The first trigger (nonce 1) may be served from the 24h cache; passing
+ * `regenerate: true` to `run()` bypasses the cache for an explicit refresh.
  */
 export function useAiToolAction<T>(
   tool: string,
   model: CvModel | null,
   extra: Record<string, unknown> = {}
-): { state: AiToolState<T>; run: () => void } {
+): { state: AiToolState<T>; run: (opts?: { regenerate?: boolean }) => void } {
   const [state, setState] = useState<AiToolState<T>>({ status: "idle" });
   const [nonce, setNonce] = useState(0);
 
@@ -148,6 +175,9 @@ export function useAiToolAction<T>(
     fetch(`/api/ai/${tool}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      // `regenerate: true` is merged into extraRef.current by run() when
+      // the user explicitly asks for a fresh result — it is sent as-is and
+      // excluded from the cache key server-side.
       body: JSON.stringify({ model, ...extraRef.current }),
     })
       .then(async (res) => {
@@ -185,7 +215,15 @@ export function useAiToolAction<T>(
     };
   }, [tool, model, nonce]);
 
-  const run = useCallback(() => setNonce((n) => n + 1), []);
+  const run = useCallback(
+    (opts?: { regenerate?: boolean }) => {
+      if (opts?.regenerate) {
+        extraRef.current = { ...extraRef.current, regenerate: true };
+      }
+      setNonce((n) => n + 1);
+    },
+    []
+  );
 
   return { state, run };
 }

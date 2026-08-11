@@ -77,6 +77,8 @@ model User {
   analyticsEvents AnalyticsEvent[]
   /// Daily GitHub stat snapshots (growth tracking)
   githubSnapshots GithubSnapshot[]
+  /// Cached AI tool results (24h TTL) — see AiResultCache
+  aiResultCaches AiResultCache[]
 }
 
 /// A named CV configuration owned by a user.
@@ -220,4 +222,34 @@ model GithubSnapshot {
 
   @@unique([userId, date])
   @@index([userId, date])
+}
+
+/// Cached AI tool results with a 24-hour TTL.
+///
+/// The dashboard fires up to 3 AI tools in parallel on every page load;
+/// on Gemini's free tier (~10-15 RPM) a few refreshes exhaust the quota.
+/// Caching per (user, tool, input-hash) means repeat page loads within
+/// 24h are served from the database with ZERO LLM calls. A `regenerate`
+/// request bypasses the read (but still refreshes the stored copy).
+///
+/// Best-effort by design: cache read/write failures are logged and the
+/// AI call proceeds normally — the cache never blocks a feature.
+model AiResultCache {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// AI tool name (aiTools registry key), e.g. "resume-review"
+  tool      String
+  /// SHA-256 of the tool + serialized request body (excludes `regenerate`)
+  inputHash String
+  /// Parsed tool result (tool-specific JSON shape)
+  result    Json
+
+  createdAt DateTime @default(now())
+  /// created + 24h — rows past this point are treated as a miss and deleted lazily
+  expiresAt DateTime
+
+  @@unique([userId, tool, inputHash])
+  @@index([userId, tool])
 }

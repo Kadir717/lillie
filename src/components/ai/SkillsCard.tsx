@@ -4,6 +4,7 @@ import type { CvModel } from "@/lib/cv-model";
 import type { SkillRecommendationResult } from "@/lib/ai/services";
 import AIInsightsCard from "./AIInsightsCard";
 import EmptyState from "./EmptyState";
+import RegenerateButton from "./RegenerateButton";
 import { SkillsSkeleton } from "./LoadingState";
 import { useAiTool, toInsightsStatus } from "./useAiTool";
 
@@ -14,7 +15,7 @@ export default function SkillsCard({
   model: CvModel | null;
   delayMs?: number;
 }) {
-  const state = useAiTool<SkillRecommendationResult>(
+  const { state, isRegenerating, regenerate } = useAiTool<SkillRecommendationResult>(
     "skill-recommendation",
     model,
     delayMs
@@ -50,6 +51,12 @@ export default function SkillsCard({
 
       {state.status === "ready" && (
         <div className="space-y-3">
+          <div className="flex justify-end">
+            <RegenerateButton
+              onClick={regenerate}
+              isRegenerating={isRegenerating}
+            />
+          </div>
           {state.result.currentSkills.length > 0 && (
             <div>
               <p className="text-[10px] uppercase tracking-widest text-slate mb-1.5">

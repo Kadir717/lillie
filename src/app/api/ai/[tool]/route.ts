@@ -4,6 +4,12 @@ import { aiTools, AI_TOOL_NAMES } from "@/lib/ai/services";
 import type { AiToolRequest } from "@/lib/ai/types";
 import { isAiConfigured } from "@/lib/ai/provider";
 import {
+  aiCacheKey,
+  getCachedAiResult,
+  resolveAiCacheUserId,
+  setCachedAiResult,
+} from "@/lib/ai/cache";
+import {
   AiError,
   AiInputError,
   AiNotConfiguredError,
@@ -18,10 +24,16 @@ import {
  * src/lib/ai/services.ts). The request body carries the already-fetched
  * CvModel, so the AI layer never re-fetches GitHub data:
  *
- *   { model: CvModel, role?: string, interest?: string, locale?: string }
+ *   { model: CvModel, role?: string, interest?: string, locale?: string, regenerate?: boolean }
+ *
+ * Results are cached per (user, tool, input-hash) for 24h (see
+ * src/lib/ai/cache.ts) so repeat dashboard loads do not burn LLM quota.
+ * Send `regenerate: true` to bypass the cache and force a fresh call
+ * (the fresh result still refreshes the cached copy). Cache failures are
+ * best-effort and never block the AI call.
  *
  * Responses:
- *   200 — { result: <tool-specific result> }
+ *   200 — { result: <tool-specific result>, cached?: true }
  *   400 — invalid JSON body / missing model / unknown tool
  *   401 — not authenticated
  *   429 — GitHub API rate limited (via middleware)
@@ -36,15 +48,6 @@ export async function POST(
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-  }
-
-  // Fail fast before reading the body: a deployment without AI_API_KEY
-  // should never cost a round-trip or surface a provider error.
-  if (!isAiConfigured()) {
-    return NextResponse.json(
-      { error: "AI is not configured on this deployment.", status: "ai_unavailable" },
-      { status: 503 }
-    );
   }
 
   const { tool } = await params;
@@ -73,8 +76,37 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  // ── Result cache (24h TTL) ────────────────────────────────────────
+  // Same user + tool + input → serve the stored result instead of calling
+  // the LLM again. Cache failures are logged and treated as a miss, so a
+  // DB hiccup never breaks the feature. `regenerate: true` skips the read
+  // but still refreshes the stored copy below. Resolve the DB user id once
+  // and reuse it for both the read and the write-back (one query total).
+  const cacheKey = aiCacheKey(tool, body);
+  const userId = await resolveAiCacheUserId(session.githubId);
+  if (!body.regenerate && userId) {
+    const cached = await getCachedAiResult<unknown>(userId, tool, cacheKey);
+    if (cached !== null) {
+      return NextResponse.json({ result: cached, cached: true });
+    }
+  }
+
+  // Fail fast before calling the provider: a deployment without AI_API_KEY
+  // should never cost a round-trip or surface a provider error. (Cached
+  // results above are still served — they need no key.)
+  if (!isAiConfigured()) {
+    return NextResponse.json(
+      { error: "AI is not configured on this deployment.", status: "ai_unavailable" },
+      { status: 503 }
+    );
+  }
+
   try {
     const result = await definition.run(body);
+    // Best-effort write-back: never block the response on a cache failure.
+    if (userId) {
+      await setCachedAiResult(userId, tool, cacheKey, result);
+    }
     return NextResponse.json({ result });
   } catch (err) {
     if (err instanceof AiInputError) {

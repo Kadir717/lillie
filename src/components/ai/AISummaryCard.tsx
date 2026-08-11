@@ -4,6 +4,7 @@ import type { CvModel } from "@/lib/cv-model";
 import type { ResumeReviewResult } from "@/lib/ai/services";
 import AIInsightsCard from "./AIInsightsCard";
 import EmptyState from "./EmptyState";
+import RegenerateButton from "./RegenerateButton";
 import { SummarySkeleton } from "./LoadingState";
 import { useAiTool, toInsightsStatus } from "./useAiTool";
 
@@ -14,7 +15,11 @@ export default function AISummaryCard({
   model: CvModel | null;
   delayMs?: number;
 }) {
-  const state = useAiTool<ResumeReviewResult>("resume-review", model, delayMs);
+  const { state, isRegenerating, regenerate } = useAiTool<ResumeReviewResult>(
+    "resume-review",
+    model,
+    delayMs
+  );
 
   return (
     <AIInsightsCard
@@ -50,6 +55,12 @@ export default function AISummaryCard({
 
       {state.status === "ready" && (
         <div className="space-y-3">
+          <div className="flex justify-end">
+            <RegenerateButton
+              onClick={regenerate}
+              isRegenerating={isRegenerating}
+            />
+          </div>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold font-mono text-grid">
               {state.result.overallScore}
