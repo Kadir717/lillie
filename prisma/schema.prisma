@@ -253,3 +253,29 @@ model AiResultCache {
   @@unique([userId, tool, inputHash])
   @@index([userId, tool])
 }
+
+/// A company-side (recruiter) account. Fully independent of the GitHub
+/// OAuth `User` flow — email + password auth via src/lib/recruiter-auth.ts.
+///
+/// ── Isolation ────────────────────────────────────────────────────
+/// Deliberately NO relations to User or any other model: recruiters never
+/// own CVs, jobs, or analytics rows. Sessions are separate too (cookie
+/// `lillie_recruiter_session` with a `type: "recruiter"` JWT claim), so a
+/// recruiter token can never be accepted by User routes and vice versa.
+/// If recruiters later need to own data (candidate pools, postings), add
+/// dedicated models then — don't retrofit relations onto this table.
+///
+/// ── Passwords ───────────────────────────────────────────────────
+/// `passwordHash` stores a Node `crypto.scrypt` digest as "salt:hash"
+/// (hex). Never store the plaintext password.
+model Recruiter {
+  id           String   @id @default(cuid())
+  /// Login email — must be a company mailbox (consumer domains blocked at signup)
+  email        String   @unique
+  /// scrypt digest, stored as "salt:hash" — see src/lib/recruiter-auth.ts
+  passwordHash String
+  companyName  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

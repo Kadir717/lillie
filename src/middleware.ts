@@ -5,7 +5,7 @@ import { InMemoryRateLimiter } from "@/lib/rate-limit";
  * Lightweight API rate limiting middleware.
  *
  * Protects every `/api/*` route with per-IP sliding-window limits:
- *   - `/api/auth/*`           → 20 req/min  (brute-force protection)
+ *   - `/api/auth/*` and `/api/recruiter-auth/*` → 20 req/min  (brute-force protection)
  *   - `/api/generate-cv`      → 10 req/min  (heavy: ~35 upstream GitHub calls)
  *   - everything else `/api/*` → 60 req/min
  *
@@ -54,7 +54,8 @@ export function middleware(request: NextRequest) {
   if (!pathname.startsWith("/api/")) return NextResponse.next();
 
   let limiter = DEFAULT_LIMITER;
-  if (pathname.startsWith("/api/auth/")) limiter = AUTH_LIMITER;
+  if (pathname.startsWith("/api/auth/") || pathname.startsWith("/api/recruiter-auth/"))
+    limiter = AUTH_LIMITER;
   else if (pathname === "/api/generate-cv") limiter = GENERATE_LIMITER;
   else if (pathname.startsWith("/api/ai/")) limiter = AI_LIMITER;
   else if (pathname.startsWith("/api/interview/")) limiter = INTERVIEW_LIMITER;
