@@ -7,6 +7,7 @@ import { InMemoryRateLimiter } from "@/lib/rate-limit";
  * Protects every `/api/*` route with per-IP sliding-window limits:
  *   - `/api/auth/*` and `/api/recruiter-auth/*` → 20 req/min  (brute-force protection)
  *   - `/api/generate-cv`      → 10 req/min  (heavy: ~35 upstream GitHub calls)
+ *   - `/api/recruiter/cv-parse` → 10 req/min (CPU-heavy PDF/DOCX parsing)
  *   - everything else `/api/*` → 60 req/min
  *
  * Exceeded limits return HTTP 429 with a JSON error and `Retry-After`.
@@ -25,6 +26,8 @@ import { InMemoryRateLimiter } from "@/lib/rate-limit";
 
 const AUTH_LIMITER = new InMemoryRateLimiter(20, 60_000);
 const GENERATE_LIMITER = new InMemoryRateLimiter(10, 60_000);
+// PDF/DOCX parsing is CPU-heavy — a separate, tighter cap than the default.
+const CV_PARSE_LIMITER = new InMemoryRateLimiter(10, 60_000);
 const AI_LIMITER = new InMemoryRateLimiter(10, 60_000); // LLM calls cost money
 const INTERVIEW_LIMITER = new InMemoryRateLimiter(20, 60_000); // each call hits GitHub
 const PORTFOLIO_LIMITER = new InMemoryRateLimiter(20, 60_000); // each call hits GitHub
@@ -57,6 +60,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith("/api/auth/") || pathname.startsWith("/api/recruiter-auth/"))
     limiter = AUTH_LIMITER;
   else if (pathname === "/api/generate-cv") limiter = GENERATE_LIMITER;
+  else if (pathname.startsWith("/api/recruiter/cv-parse")) limiter = CV_PARSE_LIMITER;
   else if (pathname.startsWith("/api/ai/")) limiter = AI_LIMITER;
   else if (pathname.startsWith("/api/interview/")) limiter = INTERVIEW_LIMITER;
   else if (pathname.startsWith("/api/portfolio/")) limiter = PORTFOLIO_LIMITER;
