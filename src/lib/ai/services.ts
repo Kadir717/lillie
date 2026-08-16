@@ -501,3 +501,36 @@ export const aiTools = {
 
 export type AiToolName = keyof typeof aiTools;
 export const AI_TOOL_NAMES = Object.keys(aiTools) as AiToolName[];
+
+/* ────────────────────────────────────────────────────────────────────
+ * Recruiter-side fit — POST /api/recruiter/fit
+ * ────────────────────────────────────────────────────────────────────
+ * Same tailoring pipeline as `tailorApplication`, but fed with the RAW
+ * text of a candidate's uploaded CV (extracted by src/lib/cv-parse.ts)
+ * instead of a serialized CvModel. buildTailorPrompt already takes plain
+ * strings, so no new prompt is needed — the recruiter flow reuses it as-is.
+ *
+ * The candidate is a third party with no LILLIE account: results are
+ * ephemeral by design (no AiResultCache / DB writes) for privacy.
+ */
+export async function recruiterFit(
+  candidateCvText: string,
+  jobDescription: string,
+  locale?: string
+): Promise<TailorResult> {
+  const cvText = candidateCvText.trim();
+  const jd = jobDescription.trim();
+  if (!cvText) throw new AiInputError("Candidate CV text is required.");
+  if (!jd) throw new AiInputError("A job description is required.");
+  const raw = await completeJson<Record<string, unknown>>(
+    buildTailorPrompt(cvText, jd, locale),
+    { temperature: 0.3, maxTokens: 1500 }
+  );
+  return {
+    fitScore: requireNumber(raw.fitScore, "fitScore"),
+    matchedStrengths: stringArray(raw.matchedStrengths),
+    gaps: stringArray(raw.gaps),
+    talkingPoints: stringArray(raw.talkingPoints),
+    coverNote: requireString(raw.coverNote, "coverNote"),
+  };
+}

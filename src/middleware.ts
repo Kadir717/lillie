@@ -8,6 +8,7 @@ import { InMemoryRateLimiter } from "@/lib/rate-limit";
  *   - `/api/auth/*` and `/api/recruiter-auth/*` → 20 req/min  (brute-force protection)
  *   - `/api/generate-cv`      → 10 req/min  (heavy: ~35 upstream GitHub calls)
  *   - `/api/recruiter/cv-parse` → 10 req/min (CPU-heavy PDF/DOCX parsing)
+ *   - `/api/recruiter/fit`     → 10 req/min (LLM call — see RECRUITER_AI_LIMITER)
  *   - everything else `/api/*` → 60 req/min
  *
  * Exceeded limits return HTTP 429 with a JSON error and `Retry-After`.
@@ -29,6 +30,10 @@ const GENERATE_LIMITER = new InMemoryRateLimiter(10, 60_000);
 // PDF/DOCX parsing is CPU-heavy — a separate, tighter cap than the default.
 const CV_PARSE_LIMITER = new InMemoryRateLimiter(10, 60_000);
 const AI_LIMITER = new InMemoryRateLimiter(10, 60_000); // LLM calls cost money
+// Recruiter-side AI (e.g. /api/recruiter/fit) draws on the SAME provider
+// quota as the dashboard AI tools — Gemini's free tier (~10-15 RPM) is
+// shared across ALL LLM calls, so the recruiter path gets the same cap.
+const RECRUITER_AI_LIMITER = new InMemoryRateLimiter(10, 60_000);
 const INTERVIEW_LIMITER = new InMemoryRateLimiter(20, 60_000); // each call hits GitHub
 const PORTFOLIO_LIMITER = new InMemoryRateLimiter(20, 60_000); // each call hits GitHub
 // /api/billing/* → 20 req/min (checkout/webhook abuse protection).
@@ -61,6 +66,7 @@ export function middleware(request: NextRequest) {
     limiter = AUTH_LIMITER;
   else if (pathname === "/api/generate-cv") limiter = GENERATE_LIMITER;
   else if (pathname.startsWith("/api/recruiter/cv-parse")) limiter = CV_PARSE_LIMITER;
+  else if (pathname.startsWith("/api/recruiter/fit")) limiter = RECRUITER_AI_LIMITER;
   else if (pathname.startsWith("/api/ai/")) limiter = AI_LIMITER;
   else if (pathname.startsWith("/api/interview/")) limiter = INTERVIEW_LIMITER;
   else if (pathname.startsWith("/api/portfolio/")) limiter = PORTFOLIO_LIMITER;
