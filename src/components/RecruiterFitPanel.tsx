@@ -267,7 +267,7 @@ export default function RecruiterFitPanel({
               <ul className="space-y-1.5">
                 {result.matchedStrengths.map((s, i) => (
                   <li key={i} className="flex gap-2 text-sm text-ink">
-                    <span className="text-grid shrink-0" aria-hidden>
+                    <span className="text-green-600 shrink-0" aria-hidden>
                       ✓
                     </span>
                     {s}
