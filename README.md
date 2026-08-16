@@ -1,8 +1,10 @@
-# LILLIE — GitHub'ından 30 saniyede CV üret
+# LILLIE — GitHub profilinizden bir kariyer platformu
 
-LILLIE, GitHub profilinizi job-ready bir CV'ye dönüştüren bir SaaS uygulamasıdır.
+LILLIE, GitHub profilinizden başlayan bir developer career platformudur.
 GitHub ile giriş yapın; public repo'larınız, dilleriniz ve aktivite veriniz
-otomatik çekilir ve profesyonel görünümlü bir CV üretilir.
+otomatik çekilir ve job-ready bir CV üretilir. CV'nin ötesinde: iş ilanlarını
+takip edip eşleştirebilir, GitHub analytics'ten içgörüler alabilir ve AI
+destekli kariyer araçlarını kullanabilirsiniz.
 
 ## Özellikler
 
@@ -11,10 +13,10 @@ otomatik çekilir ve profesyonel görünümlü bir CV üretilir.
 - Canlı React CV önizleme, anlık dil/şablon değişimi — tercihler kalıcıdır
 - `.docx` indirme + tarayıcı print-to-PDF (`/print`)
 - Birden fazla CV profili, versiyon geçmişi + karşılaştırma, paylaşım linki + QR kod
-- GitHub Insights: repo sağlığı, katkı analizi, en iyi repo, skill tespiti, achievements, README incelemesi
 - ATS skoru · iş takibi/eşleştirme/cover letter · mülakat hazırlığı · portfolyo üretici
+- AI destekli kariyer araçları dashboard'da canlı: resume review, skill önerisi, kariyer koçluğu, ilan bazlı başvuru tavsiyesi
+- GitHub Insights: repo sağlığı, katkı analizi, en iyi repo, skill tespiti, achievements, README incelemesi
 - Kullanım + büyüme analitiği · Free/Pro/Premium entitlement altyapısı (provider-bağımsız)
-- AI katmanı hazır ama UI'a bağlı değil (CTO kararı — prop-driven kalacak)
 
 ## Teknoloji
 
@@ -106,7 +108,11 @@ AI_BASE_URL=https://api.openai.com/v1  # opsiyonel (openai-compatible uçlar iç
   Together, Groq gibi uyumlu sağlayıcılar da kullanılabilir).
 - `gemini`: Google Gemini REST API.
 
-UI henüz bu uçlara bağlı değil (CTO kararı — prop-driven kalacak).
+UI bağlantısı: `resume-review`, `skill-recommendation` ve `career-coach`
+dashboard'daki AI kartlarına, `tailor` ise Jobs sayfasındaki "Get application
+advice" aksiyonuna bağlıdır. `rewrite`, `skill-gap`, `roadmap`, `learning` ile
+`interview`, `portfolio` ve `/api/ats-score` uçları API olarak hazır — UI'ları
+henüz yok.
 
 ## 5. Doğrulama komutları
 
@@ -170,5 +176,5 @@ Güncel yol haritası `docs/ROADMAP.md`'de. Öncelikler:
 - Gerçek bir ödeme sağlayıcısı bağlamak (`BillingProvider` arayüzü hazır —
   Stripe varsayılmaz, kurucu Özbekistan'da olduğu için provider seçimi açık)
 - Premium şablonlar + ATS skoru UI widget'ı
-- DeveloperProfile entegrasyonu + AI Insights kartlarının gerçek veriye bağlanması
+- DeveloperProfile entegrasyonu
 - İş / mülakat / portfolyo / analitik bölümleri için dashboard UI'ları
